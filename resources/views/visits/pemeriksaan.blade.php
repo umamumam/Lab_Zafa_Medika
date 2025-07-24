@@ -52,29 +52,11 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    {{-- <a href="{{ route('visits.show', $visit->id) }}" class="btn btn-sm btn-info"
-                                        title="Detail">
-                                        <i class="fas fa-eye"></i>
-                                    </a> --}}
-
                                     <!-- Tombol Hasil Lab -->
                                     <a href="{{ route('hasil-lab.edit', $visit->id) }}" class="btn btn-sm btn-primary"
                                         title="Input Hasil">
                                         <i class="fas fa-flask"></i>
                                     </a>
-
-                                    {{-- @if($visit->status_order == 'Proses')
-                                    <form action="{{ route('visits.update-status', $visit->id) }}" method="POST"
-                                        style="display:inline;">
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="status_order" value="Selesai">
-                                        <button type="submit" class="btn btn-sm btn-success" title="Selesai"
-                                            onclick="return confirm('Ubah status order ke Selesai?')">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
-                                    @endif --}}
                                 </div>
                             </td>
                         </tr>
@@ -87,19 +69,3 @@
 </div>
 @endsection
 
-@section('scripts')
-@parent
-<script>
-    $(document).ready(function() {
-        $('#basic-datatables').DataTable({
-            responsive: true,
-            columnDefs: [
-                { responsivePriority: 1, targets: 0 },
-                { responsivePriority: 2, targets: 1 },
-                { responsivePriority: 3, targets: 2 },
-                { responsivePriority: 4, targets: -1 }
-            ]
-        });
-    });
-</script>
-@endsection

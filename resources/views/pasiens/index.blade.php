@@ -15,19 +15,19 @@
             @endif
 
             <div class="table-responsive">
-                <table id="basic-datatables" class="display table table-striped table-hover dt-responsive nowrap"
-                    style="width: 100%">
+                <table id="basic-datatables" class="display table table-striped table-hover dt-responsive nowrap" style="width: 100%">
                     <thead class="table-primary">
                         <tr>
                             <th>No</th>
                             <th>No RM</th>
                             <th>Nama Pasien</th>
                             <th>Umur</th>
-                            <th>JK</th>
+                            <th>Jenis Kelamin</th>
                             <th>Tgl Lahir</th>
                             <th>NIK</th>
-                            <th>No Hp</th>
-                            <th>Aksi</th>
+                            <th>Phone</th>
+                            <th>Cetak</th>
+                            <th>Opsi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,18 +45,36 @@
                             <td>{{ $pasien->nik }}</td>
                             <td>{{ $pasien->no_hp }}</td>
                             <td>
-                                <a href="{{ route('pasiens.edit', $pasien->id) }}" class="btn btn-sm btn-warning">
-                                    <i class="fa fa-pencil-alt"></i>
-                                </a>
-                                <form action="{{ route('pasiens.destroy', $pasien->id) }}" method="POST"
-                                    style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Hapus data pasien ini?')">
-                                        <i class="fa fa-trash-alt"></i>
-                                    </button>
-                                </form>
+                                <div class="d-flex justify-content-start align-items-center" style="gap: 5px;">
+                                    <a href="{{ route('pasiens.card', $pasien->norm) }}" class="btn btn-sm btn-info"
+                                        target="_blank" title="Cetak Kartu">
+                                        <i class="fas fa-id-card"></i>
+                                    </a>
+                                    <a href="{{ route('pasiens.label', $pasien->norm) }}"
+                                        class="btn btn-sm btn-secondary" target="_blank" title="Cetak Label">
+                                        <i class="fas fa-barcode"></i>
+                                    </a>
+                                    <a href="{{ route('hasil-lab.riwayat', $pasien->norm) }}"
+                                        class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-clipboard-list"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-start align-items-center" style="gap: 5px;">
+                                    <a href="{{ route('pasiens.edit', $pasien->id) }}" class="btn btn-sm btn-warning">
+                                        <i class="fa fa-pencil-alt"></i>
+                                    </a>
+                                    <form action="{{ route('pasiens.destroy', $pasien->id) }}" method="POST"
+                                        style="display:inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Hapus data pasien ini?')">
+                                            <i class="fa fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         @endforeach

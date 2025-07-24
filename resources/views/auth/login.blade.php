@@ -32,7 +32,7 @@
                 <div class="row align-items-center justify-content-center">
                     <div class="col-md-7">
                         <h3>Login to <br><strong>Laboratorium Klinik Zafa Medika</strong></h3>
-                        <p class="mb-4">Jl. Perkutut No.81 Kel. Komet, Kota Banjarbaru, 70714</p>
+                        <p class="mb-4">Jl. STM, Kel. Komet. Kec. Banjarbaru Utara, Kota Banjarbaru, Kalimantan Selatan, 70714</p>
                         <br>
                         <form action="{{ route('login') }}" method="post">
                             @csrf

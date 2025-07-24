@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Visit;
+use App\Models\Pasien;
 use App\Models\HasilLab;
+use App\Models\VisitTest;
 use App\Models\DetailTest;
 use Illuminate\Http\Request;
-use App\Models\Visit;
-use App\Models\VisitTest;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
+use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
 
 class HasilLabController extends Controller
 {
@@ -196,12 +200,91 @@ class HasilLabController extends Controller
             return back()->with('error', 'Gagal membatalkan validasi: ' . $e->getMessage());
         }
     }
-    // =================blm selesai==================== //
+
     public function print($id)
     {
-        $visit = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test.detailTests', 'visitTests.hasilLabs'])
-            ->findOrFail($id);
+        $visit = Visit::with([
+            'pasien',
+            'dokter',
+            'ruangan',
+            'visitTests' => function ($query) {
+                $query->with([
+                    'test.detailTests' => function ($q) {
+                        $q->where('status', 'Aktif')->orderBy('urutan');
+                    },
+                    'hasilLabs' => function ($q) {
+                        $q->orderBy('id')->with('detailTest');
+                    }
+                ]);
+            }
+        ])->findOrFail($id);
 
-        return view('hasil_lab.print', compact('visit'));
+        // Data untuk verifikator
+        $verifikator = 'Belum Divalidasi';
+        $tanggalValidasi = 'Belum Divalidasi';
+        $jamSampling = '-';
+        $jamSelesai = '-';
+        $firstValidated = HasilLab::whereHas('visitTest', function ($q) use ($id) {
+            $q->where('visit_id', $id);
+        })->whereNotNull('validator_id')->first();
+
+        if ($firstValidated) {
+            $verifikator = $firstValidated->validator->name ?? 'Unknown';
+            $tanggalValidasi = $firstValidated->validated_at->format('d-m-Y');
+            $jamSampling = $firstValidated->created_at->format('d-m-Y H:i:s');
+            $jamSelesai = $firstValidated->validated_at->format('d-m-Y H:i:s');
+        }
+
+        // Generate barcode/QR code
+        $barcodeData = "Hasil Lab Klinik Zafa Medika - ";
+        $barcodeData .= "No. Order: " . $visit->no_order . " - ";
+        $barcodeData .= "Pasien: " . $visit->pasien->nama . " - ";
+        $barcodeData .= "Tgl. Order: " . $visit->tgl_order->format('d-m-Y H:i');
+        $barcode = DNS2D::getBarcodeHTML($barcodeData, 'QRCODE', 2, 2);
+
+        $pdf = PDF::loadView('hasil_lab.print', compact('visit', 'verifikator', 'tanggalValidasi', 'barcode', 'jamSampling', 'jamSelesai'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('hasil_lab_' . $visit->no_order . '.pdf');
+    }
+    public function cetakRiwayat($norm)
+    {
+        $pasien = Pasien::with(['visits' => function ($query) {
+            $query->with([
+                'dokter',
+                'ruangan',
+                'visitTests' => function ($q) {
+                    $q->with([
+                        'test.detailTests' => function ($dt) {
+                            $dt->where('status', 'Aktif')->orderBy('urutan');
+                        },
+                        'hasilLabs' => function ($hl) {
+                            $hl->orderBy('id')->with('detailTest');
+                        }
+                    ]);
+                }
+            ])->orderBy('tgl_order', 'desc');
+        }])->where('norm', $norm)->firstOrFail();
+
+        // Generate barcode
+        $barcodeData = "Riwayat Pemeriksaan Klinik Zafa Medika - ";
+        $barcodeData .= "Pasien: " . $pasien->nama . " - ";
+        $barcodeData .= "No. RM: " . $pasien->norm . " - ";
+        $barcodeData .= "Tgl. Cetak: " . now()->format('d-m-Y H:i:s');
+        $barcode = DNS1D::getBarcodeHTML($barcodeData, 'C128', 1, 25);
+
+        $data = [
+            'pasien' => $pasien,
+            'visits' => $pasien->visits,
+            'tanggalCetak' => now()->format('d-m-Y H:i:s'),
+            'barcode' => $barcode,
+            'verifikator' => 'Riwayat Pemeriksaan',
+            'tanggalValidasi' => now()->format('d-m-Y')
+        ];
+
+        $pdf = PDF::loadView('hasil_lab.riwayat', $data)
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('riwayat_pemeriksaan_' . $pasien->norm . '.pdf');
     }
 }

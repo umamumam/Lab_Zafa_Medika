@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pasien;
+use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PasienController extends Controller
 {
@@ -69,5 +71,41 @@ class PasienController extends Controller
         $pasien->delete();
         return redirect()->route('pasiens.index')
             ->with('success', 'Pasien berhasil dihapus');
+    }
+    public function cetakKartuByNorm($norm)
+    {
+        $pasien = Pasien::where('norm', $norm)->firstOrFail();
+        $barcodeData = "Identitas Pasien Laboratorium Klinik Zafa Medika - ";
+        $barcodeData .= $pasien->norm . " - ";
+        $barcodeData .= "Nama: " . $pasien->nama . " - ";
+        $barcodeData .= "Tgl Lahir: " . \Carbon\Carbon::parse($pasien->tgl_lahir)->format('d-m-Y') . " ";
+        $barcodeData .= "Teregistrasi: " . $pasien->created_at->format('d-m-Y');
+        $barcode = DNS2D::getBarcodeHTML($barcodeData, 'QRCODE', 2, 2);
+        $pdf = PDF::loadView('pasiens.kartu', compact('pasien', 'barcode'))
+            ->setPaper([0, 0, 255.1, 153.1]);
+        return $pdf->stream('kartu_pasien_' . $pasien->norm . '.pdf');
+    }
+    public function cetakLabelIdentitas($norm)
+    {
+        $pasien = Pasien::where('norm', $norm)->firstOrFail();
+        $tglLahir = \Carbon\Carbon::parse($pasien->tgl_lahir);
+        $umur = $tglLahir->diffInYears(\Carbon\Carbon::now());
+        $barcodeData = "LAB ZAFA MEDIKA - ";
+        $barcodeData .= strtoupper($pasien->nama) . " (" . substr($pasien->jenis_kelamin, 0, 1) . ") - ";
+        $barcodeData .= $tglLahir->format('d-m-Y') . "/" . $umur . "Thn - ";
+        $barcodeData .= "RM" . $pasien->norm . " - ";
+        $barcodeData .= "Status:" . explode(' / ', $pasien->status_pasien)[0] . " - ";
+        $barcodeData .= "Tgl Register:" . $pasien->created_at->format('Y-m-d');
+        $barcode = DNS2D::getBarcodeHTML($barcodeData, 'QRCODE', 1.5, 1.5);
+        $data = [
+            'pasien' => $pasien,
+            'barcode' => $barcode,
+            'umur' => $umur,
+            'tglLahirFormatted' => $tglLahir->format('d-m-Y'),
+            'tglRegisterFormatted' => $pasien->created_at->format('Y-m-d')
+        ];
+        $pdf = PDF::loadView('pasiens.label', $data)
+            ->setPaper([0, 0, 200, 100]);
+        return $pdf->stream('label_' . $pasien->norm . '.pdf');
     }
 }

@@ -102,6 +102,11 @@
                                     <span class="sub-item">Pengambilan Sampel</span>
                                 </a>
                             </li>
+                            <li>
+                                <a href="/visits/barcode">
+                                    <span class="sub-item">Cetak Barcode Sampel</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>

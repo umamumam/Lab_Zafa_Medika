@@ -63,7 +63,7 @@
                             </td>
                             <td>
                                 <div class="d-flex justify-content-start align-items-center" style="gap: 5px;">
-                                    <a href="{{ route('visits.show', $visit->id) }}" class="btn btn-sm btn-info"
+                                    <a href="{{ route('hasil-lab.edit', $visit->id) }}" class="btn btn-sm btn-info"
                                         title="Detail">
                                         <i class="fas fa-eye"></i>
                                     </a>

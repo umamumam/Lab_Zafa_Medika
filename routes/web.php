@@ -34,9 +34,14 @@ Route::resource('ruangans', RuanganController::class);
 Route::resource('tests', TestController::class);
 Route::resource('detail_tests', DetailTestController::class);
 Route::resource('vouchers', VoucherController::class);
+Route::get('/pasien/card/{norm}', [PasienController::class, 'cetakKartuByNorm'])->name('pasiens.card');
+Route::get('/pasien/label/{norm}', [PasienController::class, 'cetakLabelIdentitas'])->name('pasiens.label');
+// Route::get('/pasien/riwayat/{norm}', [PasienController::class, 'cetakRiwayat'])->name('pasiens.riwayat');
+Route::get('/pasien/{norm}/riwayat', [HasilLabController::class, 'cetakRiwayat'])->name('hasil-lab.riwayat');
 Route::resource('pasiens', PasienController::class);
 Route::get('/tests/{test}/details', [TestController::class, 'getDetails'])->name('tests.details');
 Route::get('visits/sampling', [VisitController::class, 'sampling'])->name('visits.sampling');
+Route::get('visits/barcode', [VisitController::class, 'barcodesampling'])->name('visits.barcode');
 Route::get('visits/pemeriksaan', [VisitController::class, 'pemeriksaan'])->name('visits.pemeriksaan');
 Route::put('/visits/{visit}/status', [VisitController::class, 'updateStatus'])->name('visits.update-status');
 Route::get('/visits/validasi', [VisitController::class, 'validasi'])->name('visits.validasi');
@@ -44,6 +49,10 @@ Route::get('/visits/cetak', [VisitController::class, 'cetak'])->name('visits.cet
 Route::get('/visits/bayar', [VisitController::class, 'bayar'])->name('visits.bayar');
 Route::get('visits/{id}/pembayaran', [VisitController::class, 'formPembayaran'])->name('visits.formPembayaran');
 Route::post('visits/{id}/pembayaran', [VisitController::class, 'pembayaran'])->name('visits.pembayaran');
+Route::get('/visits/label/{no_order}', [VisitController::class, 'cetakLabel'])->name('visits.cetak.label');
+Route::get('/visits/nota/{no_order}', [VisitController::class, 'cetakNota'])->name('visits.cetak.nota');
+Route::get('/visits/barcode/{no_order}', [VisitController::class, 'cetakBarcode'])->name('visits.cetak.barcode');
+Route::get('/visits/{id}/proses', [VisitController::class, 'proses'])->name('visits.proses');
 Route::get('laporan-pembayaran', [VisitController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
 Route::get('/hasil-lab/print/{id}', [App\Http\Controllers\HasilLabController::class, 'print'])->name('hasil-lab.print');
 

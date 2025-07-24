@@ -23,7 +23,7 @@
                     <div class="alert alert-danger">{{ session('error') }}</div>
                     @endif
 
-                    <table id="basic-datatables" class="display table table-striped table-hover dt-responsive nowrap"
+                    <table id="basic-datatables" class="display table table-striped table-hover"
                         style="width: 100%">
                         <thead class="table-primary">
                             <tr>
@@ -55,21 +55,23 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <!-- Tombol Edit -->
-                                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                        data-bs-target="#editModal{{ $dokter->id }}">
-                                        <i class="fa fa-pencil-alt"></i>
-                                    </button>
-
-                                    <!-- Form Hapus -->
-                                    <form action="{{ route('dokters.destroy', $dokter->id) }}" method="POST"
-                                        style="display:inline;">
-                                        @csrf @method('DELETE')
-                                        <button onclick="return confirm('Hapus data dokter ini?')"
-                                            class="btn btn-danger btn-sm">
-                                            <i class="fa fa-trash-alt"></i>
+                                    <div class="d-flex justify-content-start align-items-center" style="gap: 5px;">
+                                        <!-- Tombol Edit -->
+                                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#editModal{{ $dokter->id }}">
+                                            <i class="fa fa-pencil-alt"></i>
                                         </button>
-                                    </form>
+
+                                        <!-- Form Hapus -->
+                                        <form action="{{ route('dokters.destroy', $dokter->id) }}" method="POST"
+                                            style="display:inline;">
+                                            @csrf @method('DELETE')
+                                            <button onclick="return confirm('Hapus data dokter ini?')"
+                                                class="btn btn-danger btn-sm">
+                                                <i class="fa fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
 

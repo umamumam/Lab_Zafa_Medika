@@ -1,5 +1,7 @@
 @extends('layouts1.app')
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
 @section('content')
 <div class="page-inner">
     <div class="card shadow mb-4">
@@ -65,23 +67,47 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{{ route('visits.show', $visit->id) }}" class="btn btn-sm btn-info">
-                                    <i class="fa fa-eye"></i>
-                                </a>
-                                @if($visit->status_order == 'Sampling')
-                                <a href="{{ route('visits.edit', $visit->id) }}" class="btn btn-sm btn-warning">
-                                    <i class="fa fa-pencil-alt"></i>
-                                </a>
-                                <form action="{{ route('visits.destroy', $visit->id) }}" method="POST"
-                                    style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Hapus pemeriksaan ini?')">
-                                        <i class="fa fa-trash-alt"></i>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-primary dropdown-toggle py-1 px-3" type="button"
+                                        id="dropdownMenuButton{{ $visit->id }}" data-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false" style="font-size: 0.9rem;">
+                                        Opsi
                                     </button>
-                                </form>
-                                @endif
+                                    <div class="dropdown-menu dropdown-menu-right"
+                                        aria-labelledby="dropdownMenuButton{{ $visit->id }}"
+                                        style="font-size: 0.95rem;">
+                                        <a class="dropdown-item py-2" href="{{ route('visits.show', $visit->id) }}">
+                                            Preview
+                                        </a>
+                                        <a class="dropdown-item py-2"
+                                            href="{{ route('visits.cetak.label', $visit->no_order) }}" target="_blank">
+                                            Cetak Label
+                                        </a>
+                                        <a class="dropdown-item py-2"
+                                            href="{{ route('visits.cetak.nota', $visit->no_order) }}" target="_blank">
+                                            Cetak Nota
+                                        </a>
+                                        @if($visit->status_order == 'Selesai')
+                                        <a class="dropdown-item py-2" href="{{ route('hasil-lab.print', $visit->id) }}"
+                                            target="_blank">
+                                            Cetak Hasil
+                                        </a>
+                                        @endif
+                                        @if($visit->status_order == 'Sampling')
+                                        <hr>
+                                        <form action="{{ route('visits.destroy', $visit->id) }}" method="POST"
+                                            class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="dropdown-item py-2 text-danger"
+                                                onclick="return confirm('Hapus data ini?')"
+                                                style="cursor: pointer; width: 100%; text-align: left; background: none; border: none;">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                        @endif
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                         @endforeach

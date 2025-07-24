@@ -13,7 +13,12 @@ use App\Models\HasilLab;
 use App\Models\Metodebyr;
 use App\Models\VisitTest;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Riskihajar\Terbilang\Terbilang;
+use Illuminate\Support\Facades\Config;
+use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
+use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
 
 class VisitController extends Controller
 {
@@ -326,6 +331,15 @@ class VisitController extends Controller
 
         return view('visits.sampling', compact('visits'));
     }
+    public function barcodesampling()
+    {
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'visitTests.hasilLabs'])
+            ->whereIn('status_order', ['Sampling', 'Proses'])
+            ->orderBy('tgl_order', 'desc')
+            ->get();
+
+        return view('visits.barcodesampling', compact('visits'));
+    }
     public function pemeriksaan()
     {
         $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test'])
@@ -389,5 +403,89 @@ class VisitController extends Controller
             ->get();
 
         return view('visits.laporan-pembayaran', compact('visits'));
+    }
+
+    public function cetakLabel($no_order)
+    {
+        $visit = Visit::with(['pasien'])
+            ->where('no_order', $no_order)
+            ->firstOrFail();
+        $barcodeData = $visit->no_order;
+        $barcode = DNS1D::getBarcodeHTML($barcodeData, 'C128', 1.5, 30);
+        $data = [
+            'visit' => $visit,
+            'barcode' => $barcode,
+            'tanggalCetak' => now()->format('d-m-Y H:i')
+        ];
+        $pdf = PDF::loadView('visits.label', $data)
+            ->setPaper([0, 0, 200, 100]);
+        return $pdf->stream('label_' . $visit->no_order . '.pdf');
+    }
+    public function cetakNota($no_order)
+    {
+        Config::set('terbilang.locale', 'id');
+        $visit = Visit::with([
+            'pasien',
+            'dokter',
+            'ruangan',
+            'visitTests.test',
+            'metodePembayaran',
+            'penerimaan.user',
+            'penerimaan.metodeBayar'
+        ])
+            ->where('no_order', $no_order)
+            ->firstOrFail();
+        $subtotal = $visit->visitTests->sum('subtotal');
+        $diskon = $visit->voucher ? $visit->voucher->nilai_diskon : 0;
+        $total = $subtotal - $diskon;
+        $barcodeData = "NOTA PEMBAYARAN KLINIK ZAFA MEDIKA\n";
+        $barcodeData .= "No. Order: " . $visit->no_order . "\n";
+        $barcodeData .= "Pasien: " . $visit->pasien->nama . "\n";
+        $barcodeData .= "Total: Rp " . number_format($total, 0, ',', '.') . "\n";
+        $barcodeData .= "Tgl. Cetak: " . now()->format('d-m-Y H:i');
+
+        $barcode = DNS2D::getBarcodeHTML($barcodeData, 'QRCODE', 2, 2);
+        $verifikator = 'Belum Divalidasi';
+        $tanggalValidasi = 'Belum Divalidasi';
+        if ($visit->penerimaan) {
+            $verifikator = $visit->penerimaan->user->name ?? 'Kasir: ' . auth()->user()->name;
+            $tanggalValidasi = $visit->penerimaan->created_at->format('d-m-Y');
+        }
+        $data = [
+            'visit' => $visit,
+            'subtotal' => $subtotal,
+            'diskon' => $diskon,
+            'total' => $total,
+            'terbilang' => ucwords((new Terbilang)->make($total)),
+            'tanggalCetak' => now()->format('d-m-Y H:i'),
+            'penerimaan' => $visit->penerimaan,
+            'barcode' => $barcode,
+            'tanggalValidasi' => $tanggalValidasi,
+            'verifikator' => $verifikator,
+            'petugasLab' => 'Petugas Laboratorium'
+        ];
+        $pdf = PDF::loadView('visits.nota', $data)
+            ->setPaper('a4', 'portrait');
+        return $pdf->stream('nota_' . $visit->no_order . '.pdf');
+    }
+    public function cetakBarcode($no_order)
+    {
+        $visit = Visit::with(['pasien', 'visitTests.test'])
+            ->where('no_order', $no_order)
+            ->firstOrFail();
+        $samples = $visit->visitTests->map(function ($vt) {
+            return $vt->test->jenis_sampel;
+        })->unique()->values()->all();
+        $barcodeData = $visit->no_order;
+        $barcode = DNS1D::getBarcodeHTML($barcodeData, 'C128', 1.5, 30);
+        $data = [
+            'visit' => $visit,
+            'barcode' => $barcode,
+            'samples' => $samples,
+            'tanggalCetak' => now()->format('d-m-Y H:i')
+        ];
+        $pdf = PDF::loadView('visits.barcode', $data)
+            ->setPaper([0, 0, 200, 100]);
+        return $pdf->stream('label_' . $visit->no_order . '.pdf');
     }
 }

@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Penerimaan extends Model
 {
@@ -25,7 +26,7 @@ class Penerimaan extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    public function metodeBayar()
+    public function metodeBayar(): BelongsTo
     {
         return $this->belongsTo(Metodebyr::class, 'metodebyr_id');
     }
