@@ -12,6 +12,7 @@ use App\Models\Voucher;
 use App\Models\HasilLab;
 use App\Models\Metodebyr;
 use App\Models\VisitTest;
+use App\Models\Penerimaan;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -106,21 +107,42 @@ class VisitController extends Controller
                 'status_pembayaran' => 'Belum Lunas',
                 'status_order' => 'Sampling',
             ]);
+            $totalTagihan = 0;
             foreach ($request->tests as $test) {
                 $testModel = Test::find($test['test_id']);
                 $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
+                $subtotal = $harga * $test['jumlah'];
                 VisitTest::create([
                     'visit_id' => $visit->id,
                     'test_id' => $test['test_id'],
                     'harga' => $harga,
                     'jumlah' => $test['jumlah'],
-                    'subtotal' => $harga * $test['jumlah'],
+                    'subtotal' => $subtotal,
                 ]);
+                $totalTagihan += $subtotal;
             }
             if ($request->voucher_id) {
-                $visit->voucher_id = $request->voucher_id;
-                $visit->save();
+                $voucher = Voucher::find($request->voucher_id);
+                if ($voucher) {
+                    $totalTagihan -= $voucher->nilai_diskon;
+                    if ($totalTagihan < 0) {
+                        $totalTagihan = 0;
+                    }
+                }
             }
+            $visit->total_tagihan = $totalTagihan;
+            $visit->dibayar = 0;
+            if ($request->jenis_pasien == 'BPJS') {
+                $visit->total_tagihan = 0;
+                $visit->status_pembayaran = 'Lunas';
+                $visit->dibayar = 0;
+            } else {
+                $visit->status_pembayaran = ($totalTagihan <= 0) ? 'Lunas' : 'Belum Lunas';
+                if ($totalTagihan <= 0) {
+                    $visit->dibayar = 0;
+                }
+            }
+            $visit->save();
             DB::commit();
             return redirect()->route('visits.show', $visit->id)
                 ->with('success', 'Order berhasil dibuat dengan nomor: ' . $no_order);
@@ -206,25 +228,53 @@ class VisitController extends Controller
                 return isset($t['id']);
             })->pluck('id')->toArray();
             $visit->visitTests()->whereNotIn('id', $existingIds)->delete();
+            $totalTagihan = 0;
             foreach ($request->tests as $test) {
                 $harga = $request->jenis_pasien == 'BPJS'
                     ? Test::find($test['test_id'])->harga_bpjs
                     : Test::find($test['test_id'])->harga_umum;
+                $subtotal = $harga * $test['jumlah'];
                 if (isset($test['id'])) {
                     $visit->visitTests()
                         ->where('id', $test['id'])
                         ->update([
                             'harga' => $harga,
                             'jumlah' => $test['jumlah'],
-                            'subtotal' => $harga * $test['jumlah']
+                            'subtotal' => $subtotal
                         ]);
                 } else {
                     $visit->visitTests()->create([
                         'test_id' => $test['test_id'],
                         'harga' => $harga,
                         'jumlah' => $test['jumlah'],
-                        'subtotal' => $harga * $test['jumlah']
+                        'subtotal' => $subtotal
                     ]);
+                }
+                $totalTagihan += $subtotal;
+            }
+            if ($request->voucher_id) {
+                $voucher = Voucher::find($request->voucher_id);
+                if ($voucher) {
+                    $totalTagihan -= $voucher->nilai_diskon;
+                    if ($totalTagihan < 0) {
+                        $totalTagihan = 0;
+                    }
+                }
+            }
+            $visit->total_tagihan = $totalTagihan;
+            if ($request->jenis_pasien == 'BPJS') {
+                $visit->total_tagihan = 0;
+                $visit->status_pembayaran = 'Lunas';
+                $visit->dibayar = 0;
+            } else {
+                if ($visit->dibayar >= $visit->total_tagihan) {
+                    $visit->status_pembayaran = 'Lunas';
+                } else {
+                    $visit->status_pembayaran = 'Belum Lunas';
+                }
+                if ($totalTagihan <= 0) {
+                    $visit->status_pembayaran = 'Lunas';
+                    $visit->dibayar = 0;
                 }
             }
 
@@ -569,5 +619,62 @@ class VisitController extends Controller
             'laporan' => $laporan,
             'tahun' => $tahun
         ]);
+    }
+    public function laporanKasirHarian(Request $request)
+    {
+        $tanggal = $request->input('tanggal', Carbon::today()->format('Y-m-d'));
+        $transactions = Penerimaan::with(['visit.pasien', 'visit.ruangan', 'metodeBayar', 'user'])
+            ->whereDate('created_at', $tanggal)
+            ->where('status', 'Terklaim')
+            ->orderBy('created_at', 'asc')
+            ->get();
+        $dataLaporan = [];
+        $totalCash = 0;
+        $totalQris = 0;
+        $totalTransfer = 0;
+        foreach ($transactions as $transaction) {
+            $namaPasien = $transaction->visit->pasien->nama ?? 'Pasien Tidak Ditemukan';
+            $jenisPasien = $transaction->visit->jenis_pasien ?? 'N/A';
+            $metodeBayar = $transaction->metodeBayar->nama ?? 'Lainnya';
+            $jumlahDibayar = $transaction->jumlah;
+            $kasir = $transaction->user->name ?? 'Kasir Tidak Ditemukan';
+            $namaRuangan = $transaction->visit->ruangan->nama ?? 'Lab. Zafa Medika';
+            if ($jenisPasien == 'BPJS' && $jumlahDibayar == 0) {
+                $dataLaporan[] = [
+                    'nama' => $namaPasien . ' (' . $namaRuangan . ')',
+                    'jumlah' => $jumlahDibayar,
+                    'metode' => 'BPJS-K',
+                    'kasir' => $kasir,
+                ];
+                continue;
+            }
+            $dataLaporan[] = [
+                'nama' => $namaPasien . ' (' . $namaRuangan . ')',
+                'jumlah' => $jumlahDibayar,
+                'metode' => $metodeBayar,
+                'kasir' => $kasir,
+            ];
+            if (stripos($metodeBayar, 'Cash') !== false) {
+                $totalCash += $jumlahDibayar;
+            } elseif (stripos($metodeBayar, 'QRIS') !== false) {
+                $totalQris += $jumlahDibayar;
+            } elseif (stripos($metodeBayar, 'Transfer') !== false) {
+                $totalTransfer += $jumlahDibayar;
+            }
+        }
+        $tanggalCetak = Carbon::now()->format('d-m-Y');
+        $waktuCetak = Carbon::now()->format('H:i:s');
+        $data = [
+            'tanggal' => $tanggalCetak,
+            'waktu' => $waktuCetak,
+            'laporan' => $dataLaporan,
+            'totalCash' => $totalCash,
+            'totalQris' => $totalQris,
+            'totalTransfer' => $totalTransfer,
+            'kasirBertugas' => auth()->user()->name ?? 'Administrator',
+        ];
+        $pdf = Pdf::loadView('visits.laporan-kasir-harian', $data)
+            ->setPaper('a4', 'portrait');
+        return $pdf->stream('laporan_kasir_harian_' . $tanggal . '.pdf');
     }
 }

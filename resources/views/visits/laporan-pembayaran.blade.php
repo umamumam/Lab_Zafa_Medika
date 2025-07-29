@@ -20,6 +20,8 @@
                             <th>Nama Pasien</th>
                             <th>Tanggal Order</th>
                             <th>Total</th>
+                            <th>Tagihan</th>
+                            <th>Sisa</th>
                             <th>Metode Bayar</th>
                             <th>Tgl Klaim</th>
                             <th>Kasir</th>
@@ -34,7 +36,9 @@
                             <td>{{ $visit->pasien->nama }}</td>
                             <td>{{ $visit->tgl_order->format('d/m/Y H:i') }}</td>
                             <td>Rp {{ number_format($visit->total_tagihan, 0, ',', '.') }}</td>
-                            <td>{{ $visit->penerimaan->metodeBayar->nama ?? '-' }}</td>
+                            <td>Rp {{ number_format($visit->dibayar, 0, ',', '.') }}</td>
+                            <td>Rp {{ number_format($visit->jenis_pasien == 'BPJS' ? 0 : ($visit->total_tagihan - $visit->dibayar), 0, ',', '.') }}</td>
+                            <td>{{ str_replace('BPJS Kerjasama', 'BPJS-K', $visit->penerimaan->metodeBayar->nama ?? '-') }}</td>
                             <td>{{ \Carbon\Carbon::parse($visit->penerimaan->tgl_terima)->format('d/m/Y') }}</td>
                             <td>{{ $visit->penerimaan->user->name ?? '-' }}</td>
                         </tr>

@@ -185,7 +185,7 @@
                 </li>
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#surat" class="collapsed" aria-expanded="false">
-                        <i class="fa-solid fa-server"></i>
+                        <i class="fa-solid fa-file-contract"></i>
                         <p>Surat Keterangan</p>
                         <span class="caret"></span>
                     </a>
@@ -217,7 +217,7 @@
                 </li>
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#laporan" class="collapsed" aria-expanded="false">
-                        <i class="fa-solid fa-server"></i>
+                        <i class="fa-solid fa-chart-line"></i>
                         <p>Laporan</p>
                         <span class="caret"></span>
                     </a>
@@ -234,7 +234,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="/">
+                                <a href="/laporan-kasir-harian" target="blank">
                                     <span class="sub-item">Billing Kasir All</span>
                                 </a>
                             </li>

@@ -63,6 +63,7 @@ Route::get('laporan-pembayaran', [VisitController::class, 'laporanPembayaran'])-
 Route::get('visits/laporan-tahunan', [VisitController::class, 'laporanTahunan'])->name('visits.laporan.tahunan');
 Route::get('/hasil-lab/print/{no_order}', [HasilLabController::class, 'print'])->name('hasil-lab.print');
 Route::get('/hasil-lab/download/{hash}', [HasilLabController::class, 'downloadByHash']);
+Route::get('/laporan-kasir-harian', [VisitController::class, 'laporanKasirHarian'])->name('visits.laporanKasirHarian');
 Route::resource('visits', VisitController::class);
 Route::middleware(['auth'])->group(function () {
     Route::get('visits/{visit}/hasil-lab', [HasilLabController::class, 'edit'])->name('hasil-lab.edit');
