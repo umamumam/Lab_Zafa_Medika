@@ -124,10 +124,10 @@
                             <td><strong>Tanggal Lahir</strong></td>
                             <td>: {{ \Carbon\Carbon::parse($pasien->tgl_lahir)->format('Y-m-d') }}</td>
                         </tr>
-                        <tr>
+                        {{-- <tr>
                             <td><strong>Status Pasien</strong></td>
                             <td>: {{ explode(' / ', $pasien->status_pasien)[0] }}</td>
-                        </tr>
+                        </tr> --}}
                         <tr>
                             <td><strong>Registered</strong></td>
                             <td>: {{ $pasien->created_at->format('Y-m-d') }}</td>

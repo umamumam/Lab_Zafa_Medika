@@ -4,7 +4,7 @@
 <div class="page-inner">
     <div class="card shadow">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h4>Review Hasil dan Validasi</h4>
+            <h4>Surat Narkoba</h4>
         </div>
         <div class="card-body">
             @if(session('success'))

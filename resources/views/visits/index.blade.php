@@ -88,7 +88,7 @@
                                             Cetak Nota
                                         </a>
                                         @if($visit->status_order == 'Selesai')
-                                        <a class="dropdown-item py-2" href="{{ route('hasil-lab.print', $visit->id) }}"
+                                        <a class="dropdown-item py-2" href="{{ route('hasil-lab.print', $visit->no_order) }}"
                                             target="_blank">
                                             Cetak Hasil
                                         </a>

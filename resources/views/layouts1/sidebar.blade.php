@@ -81,11 +81,11 @@
                                     <span class="sub-item">Daftar Pembayaran</span>
                                 </a>
                             </li>
-                            <li>
+                            {{-- <li>
                                 <a href="/laporan-pembayaran">
                                     <span class="sub-item">Laporan Pembayaran</span>
                                 </a>
-                            </li>
+                            </li> --}}
                         </ul>
                     </div>
                 </li>
@@ -120,7 +120,37 @@
                         <ul class="nav nav-collapse">
                             <li>
                                 <a href="/visits/pemeriksaan">
+                                    <span class="sub-item">Semua</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/pemeriksaan/hematologi">
                                     <span class="sub-item">Hematologi</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/pemeriksaan/kimiaklinik">
+                                    <span class="sub-item">Kimia Klinik</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/pemeriksaan/imunologiserologi">
+                                    <span class="sub-item">Imunologi Serologi</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/pemeriksaan/mikrobiologi">
+                                    <span class="sub-item">Mikrobiologi</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/pemeriksaan/khusus">
+                                    <span class="sub-item">Khusus</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/pemeriksaan/lainnya">
+                                    <span class="sub-item">Lainnya</span>
                                 </a>
                             </li>
                         </ul>
@@ -142,6 +172,70 @@
                             <li>
                                 <a href="/visits/cetak">
                                     <span class="sub-item">Cetak Hasil</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Generator</h4>
+                </li>
+                <li class="nav-item">
+                    <a data-bs-toggle="collapse" href="#surat" class="collapsed" aria-expanded="false">
+                        <i class="fa-solid fa-server"></i>
+                        <p>Surat Keterangan</p>
+                        <span class="caret"></span>
+                    </a>
+                    <div class="collapse" id="surat">
+                        <ul class="nav nav-collapse">
+                            <li>
+                                <a href="/">
+                                    <span class="sub-item">Surat Bebas Narkoba</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/">
+                                    <span class="sub-item">Surat Antigen Covid-19</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/">
+                                    <span class="sub-item">Kartu Golongan Darah</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Laporan</h4>
+                </li>
+                <li class="nav-item">
+                    <a data-bs-toggle="collapse" href="#laporan" class="collapsed" aria-expanded="false">
+                        <i class="fa-solid fa-server"></i>
+                        <p>Laporan</p>
+                        <span class="caret"></span>
+                    </a>
+                    <div class="collapse" id="laporan">
+                        <ul class="nav nav-collapse">
+                            <li>
+                                <a href="/laporan-pembayaran">
+                                    <span class="sub-item">Transaksi</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/visits/laporan-tahunan">
+                                    <span class="sub-item">Pemeriksaan</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/">
+                                    <span class="sub-item">Billing Kasir All</span>
                                 </a>
                             </li>
                         </ul>

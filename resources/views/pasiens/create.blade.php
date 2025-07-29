@@ -9,7 +9,8 @@
         <div class="card-body">
             <h5>Perhatian Sebelum Registrasi Rekam Medik Baru / Pasien Baru</h5>
             <ol class="mb-4">
-                <li>Setiap Pasien yang datang, tanyakan "Apakah pernah terdaftar sebelumnya di Laboratorium Zafa Medika?"
+                <li>Setiap Pasien yang datang, tanyakan "Apakah pernah terdaftar sebelumnya di Laboratorium Zafa
+                    Medika?"
                 </li>
                 <li>Lakukan crosscheck kembali data Pasien pada Sistem LabKlin, dengan melakukan pencarian NIK atau Nama
                     Pasien pada halaman daftar pasien.</li>
@@ -38,7 +39,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="tgl_lahir">Tanggal Lahir <span class="text-danger">*</span></label>
                             <input type="date" class="form-control @error('tgl_lahir') is-invalid @enderror"
@@ -50,10 +51,7 @@
                             @enderror
                         </div>
                     </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="jenis_kelamin">Jenis Kelamin <span class="text-danger">*</span></label>
                             <select class="form-control @error('jenis_kelamin') is-invalid @enderror" id="jenis_kelamin"
@@ -65,26 +63,6 @@
                                     Perempuan</option>
                             </select>
                             @error('jenis_kelamin')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="status_pasien">Status Pasien <span class="text-danger">*</span></label>
-                            <select class="form-control @error('status_pasien') is-invalid @enderror" id="status_pasien"
-                                name="status_pasien" required>
-                                <option value="">Pilih Status Pasien</option>
-                                @foreach(['APS / UMUM', 'Asuransi', 'BPJS', 'Lupis', 'Medical Check Up', 'Prolanis',
-                                'Rujukan Faskes', 'Rujukan Dokter', 'Lainnya'] as $status)
-                                <option value="{{ $status }}" {{ old('status_pasien')==$status ? 'selected' : '' }}>
-                                    {{ $status }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('status_pasien')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
                             </span>

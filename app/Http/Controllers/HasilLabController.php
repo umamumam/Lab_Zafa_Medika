@@ -201,7 +201,7 @@ class HasilLabController extends Controller
         }
     }
 
-    public function print($id)
+    public function print($no_order)
     {
         $visit = Visit::with([
             'pasien',
@@ -217,15 +217,15 @@ class HasilLabController extends Controller
                     }
                 ]);
             }
-        ])->findOrFail($id);
+        ])->where('no_order', $no_order)->firstOrFail();
 
         // Data untuk verifikator
         $verifikator = 'Belum Divalidasi';
         $tanggalValidasi = 'Belum Divalidasi';
         $jamSampling = '-';
         $jamSelesai = '-';
-        $firstValidated = HasilLab::whereHas('visitTest', function ($q) use ($id) {
-            $q->where('visit_id', $id);
+        $firstValidated = HasilLab::whereHas('visitTest', function ($q) use ($visit) {
+            $q->where('visit_id', $visit->id);
         })->whereNotNull('validator_id')->first();
 
         if ($firstValidated) {
@@ -247,6 +247,18 @@ class HasilLabController extends Controller
 
         return $pdf->stream('hasil_lab_' . $visit->no_order . '.pdf');
     }
+
+    public function downloadByHash($hash)
+    {
+        $visit = Visit::all()->first(function ($v) use ($hash) {
+            return md5($v->id) === $hash;
+        });
+        if (!$visit) {
+            abort(404);
+        }
+        return $this->print($visit->no_order); // atau view cetak
+    }
+
     public function cetakRiwayat($norm)
     {
         $pasien = Pasien::with(['visits' => function ($query) {

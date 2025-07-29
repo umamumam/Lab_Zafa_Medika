@@ -207,6 +207,10 @@
             <td style="padding: 2px 0;">: 1. Allyssa Dwi Wasilah, S.Tr. Kes | 2. {{ $verifikator }}</td>
         </tr>
         <tr>
+            <td style="padding: 2px 0; vertical-align: top;">Jam Order</td>
+            <td style="padding: 2px 0;">: {{ $visit->tgl_order->format('d-m-Y - H:i:s') }} | {{ $visit->user->name ?? '-' }}</td>
+        </tr>
+        <tr>
             <td style="padding: 2px 0; vertical-align: top;">Jam Sampling</td>
             <td style="padding: 2px 0;">: {{ $jamSampling }} | {{ $verifikator }}</td>
         </tr>

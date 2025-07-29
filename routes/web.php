@@ -43,6 +43,12 @@ Route::get('/tests/{test}/details', [TestController::class, 'getDetails'])->name
 Route::get('visits/sampling', [VisitController::class, 'sampling'])->name('visits.sampling');
 Route::get('visits/barcode', [VisitController::class, 'barcodesampling'])->name('visits.barcode');
 Route::get('visits/pemeriksaan', [VisitController::class, 'pemeriksaan'])->name('visits.pemeriksaan');
+Route::get('/pemeriksaan/hematologi', [VisitController::class, 'Hematologi'])->name('pemeriksaan.hematologi');
+Route::get('/pemeriksaan/kimiaklinik', [VisitController::class, 'KimiaKlinik'])->name('pemeriksaan.kimiaklinik');
+Route::get('/pemeriksaan/imunologiserologi', [VisitController::class, 'imunologiSerologi'])->name('pemeriksaan.imunologiserologi');
+Route::get('/pemeriksaan/mikrobiologi', [VisitController::class, 'mikrobiologi'])->name('pemeriksaan.mikrobiologi');
+Route::get('/pemeriksaan/khusus', [VisitController::class, 'khusus'])->name('pemeriksaan.khusus');
+Route::get('/pemeriksaan/lainnya', [VisitController::class, 'lainnya'])->name('pemeriksaan.lainnya');
 Route::put('/visits/{visit}/status', [VisitController::class, 'updateStatus'])->name('visits.update-status');
 Route::get('/visits/validasi', [VisitController::class, 'validasi'])->name('visits.validasi');
 Route::get('/visits/cetak', [VisitController::class, 'cetak'])->name('visits.cetak');
@@ -54,8 +60,9 @@ Route::get('/visits/nota/{no_order}', [VisitController::class, 'cetakNota'])->na
 Route::get('/visits/barcode/{no_order}', [VisitController::class, 'cetakBarcode'])->name('visits.cetak.barcode');
 Route::get('/visits/{id}/proses', [VisitController::class, 'proses'])->name('visits.proses');
 Route::get('laporan-pembayaran', [VisitController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
-Route::get('/hasil-lab/print/{id}', [App\Http\Controllers\HasilLabController::class, 'print'])->name('hasil-lab.print');
-
+Route::get('visits/laporan-tahunan', [VisitController::class, 'laporanTahunan'])->name('visits.laporan.tahunan');
+Route::get('/hasil-lab/print/{no_order}', [HasilLabController::class, 'print'])->name('hasil-lab.print');
+Route::get('/hasil-lab/download/{hash}', [HasilLabController::class, 'downloadByHash']);
 Route::resource('visits', VisitController::class);
 Route::middleware(['auth'])->group(function () {
     Route::get('visits/{visit}/hasil-lab', [HasilLabController::class, 'edit'])->name('hasil-lab.edit');

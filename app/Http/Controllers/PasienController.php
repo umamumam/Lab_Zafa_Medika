@@ -26,7 +26,7 @@ class PasienController extends Controller
             'nama' => 'required|max:100',
             'tgl_lahir' => 'required|date',
             'jenis_kelamin' => 'required|in:Laki - Laki,Perempuan',
-            'status_pasien' => 'required|in:APS / UMUM,Asuransi,BPJS,Lupis,Medical Check Up,Prolanis,Rujukan Faskes,Rujukan Dokter,Lainnya',
+            'status_pasien' => 'nullable|in:APS / UMUM,Asuransi,BPJS,Lupis,Medical Check Up,Prolanis,Rujukan Faskes,Rujukan Dokter,Lainnya',
             'nik' => 'required|digits:16|unique:pasiens',
             'no_bpjs' => 'nullable|max:20',
             'email' => 'nullable|email|max:100',
@@ -52,7 +52,7 @@ class PasienController extends Controller
             'nama' => 'required|max:100',
             'tgl_lahir' => 'required|date',
             'jenis_kelamin' => 'required|in:Laki - Laki,Perempuan',
-            'status_pasien' => 'required|in:APS / UMUM,Asuransi,BPJS,Lupis,Medical Check Up,Prolanis,Rujukan Faskes,Rujukan Dokter,Lainnya',
+            'status_pasien' => 'nullable|in:APS / UMUM,Asuransi,BPJS,Lupis,Medical Check Up,Prolanis,Rujukan Faskes,Rujukan Dokter,Lainnya',
             'nik' => 'required|digits:16|unique:pasiens,nik,' . $pasien->id,
             'no_bpjs' => 'nullable|max:20',
             'email' => 'nullable|email|max:100',
@@ -94,7 +94,8 @@ class PasienController extends Controller
         $barcodeData .= strtoupper($pasien->nama) . " (" . substr($pasien->jenis_kelamin, 0, 1) . ") - ";
         $barcodeData .= $tglLahir->format('d-m-Y') . "/" . $umur . "Thn - ";
         $barcodeData .= "RM" . $pasien->norm . " - ";
-        $barcodeData .= "Status:" . explode(' / ', $pasien->status_pasien)[0] . " - ";
+        $statusPasienText = $pasien->status_pasien ? explode(' / ', $pasien->status_pasien)[0] : 'N/A';
+        $barcodeData .= "Status:" . $statusPasienText . " - ";
         $barcodeData .= "Tgl Register:" . $pasien->created_at->format('Y-m-d');
         $barcode = DNS2D::getBarcodeHTML($barcodeData, 'QRCODE', 1.5, 1.5);
         $data = [

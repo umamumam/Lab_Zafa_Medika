@@ -65,9 +65,9 @@
                 <div class="patient-data patient-norm">
                     RM: {{ $pasien->norm }}
                 </div>
-                <div class="patient-data">
+                {{-- <div class="patient-data">
                     Status: {{ explode(' / ', $pasien->status_pasien)[0] }}
-                </div>
+                </div> --}}
                 <div class="patient-data">
                     Tgl Register: {{ $tglRegisterFormatted }}
                 </div>

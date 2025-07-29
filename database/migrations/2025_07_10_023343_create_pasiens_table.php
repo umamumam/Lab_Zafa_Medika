@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nama', 100);
             $table->date('tgl_lahir');
             $table->enum('jenis_kelamin', ['Laki - Laki', 'Perempuan']);
-            $table->enum('status_pasien', ['APS / UMUM', 'Asuransi', 'BPJS', 'Lupis', 'Medical Check Up', 'Prolanis', 'Rujukan Faskes', 'Rujukan Dokter', 'Lainnya']);
+            $table->enum('status_pasien', ['APS / UMUM', 'Asuransi', 'BPJS', 'Lupis', 'Medical Check Up', 'Prolanis', 'Rujukan Faskes', 'Rujukan Dokter', 'Lainnya'])->nullable();
             $table->string('nik', 16)->unique();
             $table->string('no_bpjs', 20)->nullable();
             $table->string('email', 100)->nullable();

@@ -349,6 +349,46 @@ class VisitController extends Controller
 
         return view('visits.pemeriksaan', compact('visits'));
     }
+    public function Hematologi()
+    {
+        $visits = $this->filterPemeriksaanByGrup('Hematologi');
+        return view('visits.hematologi', compact('visits'));
+    }
+    public function KimiaKlinik()
+    {
+        $visits = $this->filterPemeriksaanByGrup('Kimia Klinik');
+        return view('visits.kimiaklinik', compact('visits'));
+    }
+    public function imunologiSerologi()
+    {
+        $visits = $this->filterPemeriksaanByGrup('Imunologi / Serologi');
+        return view('visits.imunologiserologi', compact('visits'));
+    }
+    public function mikrobiologi()
+    {
+        $visits = $this->filterPemeriksaanByGrup('Mikrobiologi');
+        return view('visits.mikrobiologi', compact('visits'));
+    }
+    public function khusus()
+    {
+        $visits = $this->filterPemeriksaanByGrup('Khusus');
+        return view('visits.khusus', compact('visits'));
+    }
+    public function lainnya()
+    {
+        $visits = $this->filterPemeriksaanByGrup('Lainnya');
+        return view('visits.lainnya', compact('visits'));
+    }
+    private function filterPemeriksaanByGrup($grupTest)
+    {
+        return Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test'])
+            ->where('status_order', 'Proses')
+            ->whereHas('visitTests.test', function ($q) use ($grupTest) {
+                $q->where('grup_test', $grupTest);
+            })
+            ->orderBy('tgl_order', 'desc')
+            ->get();
+    }
     public function validasi()
     {
         $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs'])
@@ -487,5 +527,47 @@ class VisitController extends Controller
         $pdf = PDF::loadView('visits.barcode', $data)
             ->setPaper([0, 0, 200, 100]);
         return $pdf->stream('label_' . $visit->no_order . '.pdf');
+    }
+    public function laporanTahunan(Request $request)
+    {
+        $tahun = $request->input('tahun', now()->year);
+        $tests = Test::with(['visitTests.visit'])
+            ->orderBy('grup_test')
+            ->orderBy('nama')
+            ->get()
+            ->groupBy('grup_test');
+        $laporan = [];
+        $currentGroup = null;
+        foreach ($tests as $grup => $testGroup) {
+            if ($currentGroup !== $grup) {
+                $laporan[] = [
+                    'is_separator' => true,
+                    'grup' => $grup
+                ];
+                $currentGroup = $grup;
+            }
+            foreach ($testGroup as $test) {
+                $perBulan = [];
+                for ($bulan = 1; $bulan <= 12; $bulan++) {
+                    $jumlah = VisitTest::where('test_id', $test->id)
+                        ->whereHas('visit', function ($q) use ($tahun, $bulan) {
+                            $q->whereYear('tgl_order', $tahun)
+                                ->whereMonth('tgl_order', $bulan);
+                        })
+                        ->count();
+                    $perBulan[$bulan] = $jumlah;
+                }
+                $laporan[] = [
+                    'is_separator' => false,
+                    'grup' => $grup,
+                    'nama' => $test->nama,
+                    'per_bulan' => $perBulan
+                ];
+            }
+        }
+        return view('visits.laporan-tahunan', [
+            'laporan' => $laporan,
+            'tahun' => $tahun
+        ]);
     }
 }
