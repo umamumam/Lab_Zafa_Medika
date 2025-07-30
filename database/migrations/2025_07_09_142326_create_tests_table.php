@@ -17,9 +17,9 @@ return new class extends Migration
             $table->string('nama');
             $table->string('metode');
             $table->string('nilai_normal');
-            $table->enum('type', ['Single', 'Range']);
-            $table->decimal('min')->nullable();
-            $table->decimal('max')->nullable();
+            // $table->enum('type', ['Single', 'Range']);
+            // $table->decimal('min')->nullable();
+            // $table->decimal('max')->nullable();
             $table->string('satuan');
             $table->integer('harga_umum')->default(0);
             $table->integer('harga_bpjs')->default(0);

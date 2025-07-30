@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
 
 class Test extends Model
@@ -15,9 +16,9 @@ class Test extends Model
         'nama',
         'metode',
         'nilai_normal',
-        'type',
-        'min',
-        'max',
+        // 'type',
+        // 'min',
+        // 'max',
         'satuan',
         'harga_umum',
         'harga_bpjs',
@@ -35,9 +36,9 @@ class Test extends Model
             'nama' => 'required|string|max:255',
             'metode' => 'required|string|max:255',
             'nilai_normal' => 'required|string|max:255',
-            'type' => ['required', Rule::in(['Single', 'Range'])],
-            'min' => 'nullable|numeric|decimal:0,2',
-            'max' => 'nullable|numeric|decimal:0,2',
+            // 'type' => ['required', Rule::in(['Single', 'Range'])],
+            // 'min' => 'nullable|numeric|decimal:0,2',
+            // 'max' => 'nullable|numeric|decimal:0,2',
             'satuan' => 'required|string|max:50',
             'harga_umum' => 'required|integer|min:0',
             'harga_bpjs' => 'required|integer|min:0',
@@ -48,11 +49,10 @@ class Test extends Model
             'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])]
         ];
 
-        // Dynamic validation for Range type
-        if (request()->input('type') === 'Range') {
-            $rules['min'] = 'required|numeric|lt:max';
-            $rules['max'] = 'required|numeric|gt:min';
-        }
+        // if (request()->input('type') === 'Range') {
+        //     $rules['min'] = 'required|numeric|lt:max';
+        //     $rules['max'] = 'required|numeric|gt:min';
+        // }
 
         return $rules;
     }
@@ -61,16 +61,24 @@ class Test extends Model
     {
         return validator($data, static::rules())->validate();
     }
-    public function detailTests()
+
+    public function detailTests(): HasMany
     {
         return $this->hasMany(DetailTest::class)->orderBy('urutan');
     }
-    public function visitTests()
+
+    public function visitTests(): HasMany
     {
         return $this->hasMany(VisitTest::class);
     }
-    public function hasilLabs()
+
+    public function hasilLabs(): HasMany
     {
         return $this->hasMany(HasilLab::class, 'test_id');
+    }
+
+    public function normalValues(): HasMany
+    {
+        return $this->hasMany(NilaiNormal::class, 'test_id');
     }
 }

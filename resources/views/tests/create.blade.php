@@ -8,7 +8,15 @@
                 <div class="card-header">
                     <h4>Tambah Test Baru</h4>
                 </div>
-
+                @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
                 <div class="card-body">
                     <form method="POST" action="{{ route('tests.store') }}">
                         @csrf
@@ -48,47 +56,6 @@
                                 <input type="text" class="form-control @error('nilai_normal') is-invalid @enderror"
                                     id="nilai_normal" name="nilai_normal" value="{{ old('nilai_normal') }}" required>
                                 @error('nilai_normal')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="type" class="form-label">Tipe Nilai</label>
-                                <select class="form-select @error('type') is-invalid @enderror" id="type" name="type"
-                                    required>
-                                    <option value="">Pilih Tipe</option>
-                                    <option value="Single" {{ old('type')=='Single' ? 'selected' : '' }}>Single</option>
-                                    <option value="Range" {{ old('type')=='Range' ? 'selected' : '' }}>Range</option>
-                                </select>
-                                @error('type')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-4 range-fields"
-                                style="{{ old('type') == 'Range' ? '' : 'display: none;' }}">
-                                <label for="min" class="form-label">Nilai Minimum</label>
-                                <input type="text" class="form-control @error('min') is-invalid @enderror" id="min"
-                                    name="min" value="{{ old('min') }}" inputmode="decimal"
-                                    pattern="[0-9]+([\.,][0-9]+)?">
-                                {{-- <input type="number" class="form-control @error('min') is-invalid @enderror"
-                                    id="min" name="min" value="{{ old('min') }}"> --}}
-                                @error('min')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-4 range-fields"
-                                style="{{ old('type') == 'Range' ? '' : 'display: none;' }}">
-                                <label for="max" class="form-label">Nilai Maksimum</label>
-                                <input type="text" class="form-control @error('max') is-invalid @enderror" id="max"
-                                    name="max" value="{{ old('max') }}" inputmode="decimal"
-                                    pattern="[0-9]+([\.,][0-9]+)?">
-                                {{-- <input type="number" class="form-control @error('max') is-invalid @enderror"
-                                    id="max" name="max" value="{{ old('max') }}"> --}}
-                                @error('max')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -224,8 +191,8 @@
                                 <label for="status" class="form-label">Status</label>
                                 <select class="form-select @error('status') is-invalid @enderror" id="status"
                                     name="status" required>
-                                    <option value="">Pilih Status</option>
-                                    <option value="Aktif" {{ old('status')=='Aktif' ? 'selected' : '' }}>Aktif</option>
+                                    <option value="Aktif" {{ (old('status')=='Aktif' || old('status')==null)
+                                        ? 'selected' : '' }}>Aktif</option>
                                     <option value="Tidak Aktif" {{ old('status')=='Tidak Aktif' ? 'selected' : '' }}>
                                         Tidak Aktif</option>
                                 </select>
@@ -245,7 +212,82 @@
                                 @enderror
                             </div>
                         </div>
-
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <hr>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h5>Nilai Normal</h5>
+                                    <button type="button" id="add-nilai-normal" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-plus"></i> Tambah Nilai Normal
+                                    </button>
+                                </div>
+                                <p class="mb-3">Anda bisa menambahkan satu atau beberapa nilai normal berdasarkan jenis
+                                    kelamin dan rentang usia.</p>
+                                <div id="nilai-normal-container">
+                                    <div class="nilai-normal-item mb-3 p-3 border rounded bg-light">
+                                        <div class="row g-3 align-items-end">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Jenis Kelamin</label>
+                                                <select class="form-select" name="nilai_normals_data[0][jenis_kelamin]"
+                                                    required>
+                                                    <option value="Umum" {{
+                                                        old('nilai_normals_data.0.jenis_kelamin')=='Umum' ? 'selected'
+                                                        : '' }}>Umum</option>
+                                                    <option value="Laki-laki" {{
+                                                        old('nilai_normals_data.0.jenis_kelamin')=='Laki-laki'
+                                                        ? 'selected' : '' }}>Laki-laki</option>
+                                                    <option value="Perempuan" {{
+                                                        old('nilai_normals_data.0.jenis_kelamin')=='Perempuan'
+                                                        ? 'selected' : '' }}>Perempuan</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Usia Min (tahun)</label>
+                                                <input type="number" class="form-control"
+                                                    name="nilai_normals_data[0][usia_min]"
+                                                    value="{{ old('nilai_normals_data.0.usia_min') }}" min="0">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Usia Max (tahun)</label>
+                                                <input type="number" class="form-control"
+                                                    name="nilai_normals_data[0][usia_max]"
+                                                    value="{{ old('nilai_normals_data.0.usia_max') }}" min="0">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Tipe Nilai</label>
+                                                <select class="form-select nilai-type"
+                                                    name="nilai_normals_data[0][type]" required>
+                                                    <option value="Single" {{ old('nilai_normals_data.0.type')=='Single'
+                                                        ? 'selected' : '' }}>Single</option>
+                                                    <option value="Range" {{ old('nilai_normals_data.0.type')=='Range'
+                                                        ? 'selected' : '' }}>Range</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-1 range-field"
+                                                style="{{ old('nilai_normals_data.0.type') == 'Range' ? '' : 'display: none;' }}">
+                                                <label class="form-label">Min</label>
+                                                <input type="number" step="0.01" class="form-control"
+                                                    name="nilai_normals_data[0][min]"
+                                                    value="{{ old('nilai_normals_data.0.min') }}">
+                                            </div>
+                                            <div class="col-md-1 range-field"
+                                                style="{{ old('nilai_normals_data.0.type') == 'Range' ? '' : 'display: none;' }}">
+                                                <label class="form-label">Max</label>
+                                                <input type="number" step="0.01" class="form-control"
+                                                    name="nilai_normals_data[0][max]"
+                                                    value="{{ old('nilai_normals_data.0.max') }}">
+                                            </div>
+                                            <div class="col-md-1">
+                                                <button type="button"
+                                                    class="btn btn-danger btn-sm remove-nilai-normal w-100">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row mb-0">
                             <div class="col-md-12">
                                 <button type="submit" class="btn btn-primary">
@@ -265,14 +307,74 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const typeSelect = document.getElementById('type');
-        const rangeFields = document.querySelectorAll('.range-fields');
+        // Menambahkan nilai normal baru
+        let nilaiNormalIndex = 1;
+        const container = document.getElementById('nilai-normal-container');
+        const addButton = document.getElementById('add-nilai-normal');
 
-        typeSelect.addEventListener('change', function() {
-            if (this.value === 'Range') {
-                rangeFields.forEach(field => field.style.display = 'block');
-            } else {
-                rangeFields.forEach(field => field.style.display = 'none');
+        // Fungsi untuk menambahkan event listener pada type select
+        function setupTypeChangeListener(item) {
+            const typeSelect = item.querySelector('.nilai-type');
+            typeSelect.addEventListener('change', function() {
+                const rangeFields = item.querySelectorAll('.range-field');
+                if (this.value === 'Range') {
+                    rangeFields.forEach(field => field.style.display = 'block');
+                } else {
+                    rangeFields.forEach(field => field.style.display = 'none');
+                }
+            });
+        }
+
+        // Setup untuk item pertama
+        const firstItem = document.querySelector('.nilai-normal-item');
+        setupTypeChangeListener(firstItem);
+
+        // Menambahkan item baru
+        addButton.addEventListener('click', function() {
+            const template = document.querySelector('.nilai-normal-item').cloneNode(true);
+            const newIndex = nilaiNormalIndex++;
+
+            // Update semua nama input dengan index baru
+            template.querySelectorAll('[name]').forEach(input => {
+                const name = input.getAttribute('name');
+                input.setAttribute('name', name.replace('[0]', `[${newIndex}]`));
+            });
+
+            // Reset nilai input
+            template.querySelectorAll('input').forEach(input => {
+                input.value = '';
+            });
+
+            // Reset select
+            template.querySelectorAll('select').forEach(select => {
+                if (select.classList.contains('nilai-type')) {
+                    select.value = 'Single';
+                } else {
+                    select.value = select.querySelector('option').value;
+                }
+            });
+
+            // Sembunyikan range field jika ada
+            template.querySelectorAll('.range-field').forEach(field => {
+                field.style.display = 'none';
+            });
+
+            // Setup event listener untuk item baru
+            setupTypeChangeListener(template);
+
+            container.appendChild(template);
+        });
+
+        // Menghapus nilai normal
+        container.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-nilai-normal') ||
+                e.target.closest('.remove-nilai-normal')) {
+                const item = e.target.closest('.nilai-normal-item');
+                if (document.querySelectorAll('.nilai-normal-item').length > 1) {
+                    item.remove();
+                } else {
+                    alert('Minimal harus ada satu nilai normal');
+                }
             }
         });
     });

@@ -17,9 +17,9 @@ return new class extends Migration
             $table->integer('urutan')->default(0);
             $table->string('nama');
             $table->string('nilai_normal');
-            $table->enum('type', ['Single', 'Range']);
-            $table->decimal('min')->nullable();
-            $table->decimal('max')->nullable();
+            // $table->enum('type', ['Single', 'Range']);
+            // $table->decimal('min')->nullable();
+            // $table->decimal('max')->nullable();
             $table->string('satuan');
             $table->enum('status', ['Aktif', 'Tidak Aktif'])->default('Aktif');
             $table->timestamps();

@@ -81,8 +81,18 @@
                                             <td>{{ $detail->nama }}</td>
                                             <td>{{ $detail->nilai_normal }}</td>
                                             <td>{{ $detail->satuan }}</td>
-                                            <td>{{ $detail->min !== null ? (int)$detail->min : '' }}</td>
-                                            <td>{{ $detail->max !== null ? (int)$detail->max : '' }}</td>
+                                            <td>
+                                                @if($detail->normalValues->first())
+                                                {{ $detail->normalValues->first()->min !== null ?
+                                                (int)$detail->normalValues->first()->min : '' }}
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($detail->normalValues->first())
+                                                {{ $detail->normalValues->first()->max !== null ?
+                                                (int)$detail->normalValues->first()->max : '' }}
+                                                @endif
+                                            </td>
                                             <td>
                                                 <span
                                                     class="badge badge-{{ $detail->status == 'Aktif' ? 'success' : 'danger' }}">
