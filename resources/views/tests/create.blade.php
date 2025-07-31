@@ -226,16 +226,16 @@
                                 <div id="nilai-normal-container">
                                     <div class="nilai-normal-item mb-3 p-3 border rounded bg-light">
                                         <div class="row g-3 align-items-end">
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <label class="form-label">Jenis Kelamin</label>
                                                 <select class="form-select" name="nilai_normals_data[0][jenis_kelamin]"
                                                     required>
                                                     <option value="Umum" {{
                                                         old('nilai_normals_data.0.jenis_kelamin')=='Umum' ? 'selected'
                                                         : '' }}>Umum</option>
-                                                    <option value="Laki-laki" {{
-                                                        old('nilai_normals_data.0.jenis_kelamin')=='Laki-laki'
-                                                        ? 'selected' : '' }}>Laki-laki</option>
+                                                    <option value="Laki - Laki" {{
+                                                        old('nilai_normals_data.0.jenis_kelamin')=='Laki - Laki'
+                                                        ? 'selected' : '' }}>Laki - Laki</option>
                                                     <option value="Perempuan" {{
                                                         old('nilai_normals_data.0.jenis_kelamin')=='Perempuan'
                                                         ? 'selected' : '' }}>Perempuan</option>
@@ -263,23 +263,25 @@
                                                         ? 'selected' : '' }}>Range</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-1 range-field"
+                                            <div class="col-md-3 range-field"
                                                 style="{{ old('nilai_normals_data.0.type') == 'Range' ? '' : 'display: none;' }}">
-                                                <label class="form-label">Min</label>
-                                                <input type="number" step="0.01" class="form-control"
-                                                    name="nilai_normals_data[0][min]"
-                                                    value="{{ old('nilai_normals_data.0.min') }}">
+                                                <div class="row g-2">
+                                                    <div class="col">
+                                                        <label class="form-label">Min</label>
+                                                        <input type="number" step="0.01" class="form-control"
+                                                            name="nilai_normals_data[0][min]"
+                                                            value="{{ old('nilai_normals_data.0.min') }}">
+                                                    </div>
+                                                    <div class="col">
+                                                        <label class="form-label">Max</label>
+                                                        <input type="number" step="0.01" class="form-control"
+                                                            name="nilai_normals_data[0][max]"
+                                                            value="{{ old('nilai_normals_data.0.max') }}">
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-md-1 range-field"
-                                                style="{{ old('nilai_normals_data.0.type') == 'Range' ? '' : 'display: none;' }}">
-                                                <label class="form-label">Max</label>
-                                                <input type="number" step="0.01" class="form-control"
-                                                    name="nilai_normals_data[0][max]"
-                                                    value="{{ old('nilai_normals_data.0.max') }}">
-                                            </div>
-                                            <div class="col-md-1">
-                                                <button type="button"
-                                                    class="btn btn-danger btn-sm remove-nilai-normal w-100">
+                                            <div class="col-auto">
+                                                <button type="button" class="btn btn-danger remove-nilai-normal">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>

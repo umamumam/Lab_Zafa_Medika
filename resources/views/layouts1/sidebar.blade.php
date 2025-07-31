@@ -89,6 +89,8 @@
                         </ul>
                     </div>
                 </li>
+                @auth
+                @if(Auth::user()->role == 'Admin' || Auth::user()->role == 'Petugas')
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#sampel" class="collapsed" aria-expanded="false">
                         <i class="fa-solid fa-microscope"></i>
@@ -156,6 +158,8 @@
                         </ul>
                     </div>
                 </li>
+                @endif
+                @endauth
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#review" class="collapsed" aria-expanded="false">
                         <i class="fa-solid fa-laptop-medical"></i>
@@ -164,11 +168,15 @@
                     </a>
                     <div class="collapse" id="review">
                         <ul class="nav nav-collapse">
+                            @auth
+                            @if(Auth::user()->role == 'Admin' || Auth::user()->role == 'Petugas')
                             <li>
                                 <a href="/visits/validasi">
                                     <span class="sub-item">Validasi Hasil</span>
                                 </a>
                             </li>
+                            @endif
+                            @endauth
                             <li>
                                 <a href="/visits/cetak">
                                     <span class="sub-item">Cetak Hasil</span>
@@ -209,6 +217,8 @@
                         </ul>
                     </div>
                 </li>
+                @auth
+                @if(Auth::user()->role == 'Admin' || Auth::user()->role == 'Kasir')
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
@@ -223,6 +233,8 @@
                     </a>
                     <div class="collapse" id="laporan">
                         <ul class="nav nav-collapse">
+                            @auth
+                            @if(Auth::user()->role == 'Admin')
                             <li>
                                 <a href="/laporan-pembayaran">
                                     <span class="sub-item">Transaksi</span>
@@ -233,6 +245,8 @@
                                     <span class="sub-item">Pemeriksaan</span>
                                 </a>
                             </li>
+                            @endif
+                            @endauth
                             <li>
                                 <a href="/laporan-kasir-harian" target="blank">
                                     <span class="sub-item">Billing Kasir All</span>
@@ -241,6 +255,11 @@
                         </ul>
                     </div>
                 </li>
+                @endif
+                @endauth
+
+                @auth
+                @if(Auth::user()->role == 'Admin')
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
@@ -288,6 +307,8 @@
                         </ul>
                     </div>
                 </li>
+                @endif
+                @endauth
             </ul>
         </div>
     </div>

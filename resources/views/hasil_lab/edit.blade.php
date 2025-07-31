@@ -3,6 +3,68 @@
 @section('title', 'Review Hasil Laboratorium')
 
 @section('content')
+@php
+function nilaiRujukanText($model, $pasien, $usia)
+{
+    $ref = null;
+
+    if ($model instanceof \App\Models\DetailTest) {
+        $ref = \App\Models\NilaiNormal::query()
+                ->where('detail_test_id', $model->id)
+                ->where(function ($q) use ($pasien, $usia) {
+                    $q->where('jenis_kelamin', $pasien->jenis_kelamin)
+                        ->orWhere('jenis_kelamin', 'Umum');
+                })
+                ->where(function ($q) use ($usia) {
+                    $q->whereNull('usia_min')->orWhere('usia_min', '<=', $usia);
+                })
+                ->where(function ($q) use ($usia) {
+                    $q->whereNull('usia_max')->orWhere('usia_max', '>=', $usia);
+                })
+                ->orderByDesc('jenis_kelamin')
+                ->first();
+    } else { // instance of Test
+        $ref = \App\Models\NilaiNormal::query()
+                ->where('test_id', $model->id)
+                ->where(function ($q) use ($pasien, $usia) {
+                    $q->where('jenis_kelamin', $pasien->jenis_kelamin)
+                        ->orWhere('jenis_kelamin', 'Umum');
+                })
+                ->where(function ($q) use ($usia) {
+                    $q->whereNull('usia_min')->orWhere('usia_min', '<=', $usia);
+                })
+                ->where(function ($q) use ($usia) {
+                    $q->whereNull('usia_max')->orWhere('usia_max', '>=', $usia);
+                })
+                ->orderByDesc('jenis_kelamin')
+                ->first();
+    }
+
+    if (!$ref) {
+        return [
+            'text' => $model->nilai_normal ?? '-',
+            'min'  => null,
+            'max'  => null,
+        ];
+    }
+
+    if ($ref->type === 'Range') {
+        return [
+            'text' => $ref->min . ' - ' . $ref->max,
+            'min'  => $ref->min,
+            'max'  => $ref->max,
+        ];
+    } else {
+        return [
+            'text' => $ref->min,
+            'min'  => $ref->min,
+            'max'  => $ref->min,
+        ];
+    }
+}
+
+$usia = $visit->pasien->tgl_lahir->age;
+@endphp
 <div class="page-inner">
     <div class="row">
         <div class="col-12">
@@ -33,7 +95,7 @@
                                     </tr>
                                     <tr>
                                         <th>Nama Pasien</th>
-                                        <td>{{ $visit->pasien->nama }} ({{ $visit->pasien->jenis_kelamin == 'L' ? 'L' :
+                                        <td>{{ $visit->pasien->nama }} ({{ $visit->pasien->jenis_kelamin == 'Laki - Laki' ? 'L' :
                                             'P'
                                             }})</td>
                                     </tr>
@@ -89,86 +151,72 @@
                                 <tbody>
                                     @php $counter = 1 @endphp
                                     @foreach($visit->visitTests as $vt)
-                                    @foreach($vt->hasilLabs->whereNull('detail_test_id') as $mainTest)
-                                    <tr>
-                                        <td>{{ $counter++ }}</td>
-                                        <td><strong>{{ $vt->test->nama }}</strong></td>
-                                        <td class="text-center">
-                                            @if($mainTest->flag)
-                                            @if($mainTest->flag == 'H')
-                                            <span class="badge bg-danger">H</span>
-                                            @else
-                                            <span class="badge bg-warning text-dark">L</span>
-                                            @endif
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($vt->test->detailTests->count() > 0)
-                                            &nbsp;
-                                            @else
-                                            <input type="text" class="form-control form-control-sm hasil-input"
-                                                name="hasil[{{ $mainTest->id }}]" value="{{ $mainTest->hasil }}"
-                                                data-test-id="{{ $mainTest->id }}" data-min-ref="{{ $vt->test->min }}"
-                                                data-max-ref="{{ $vt->test->max }}">
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($vt->test->detailTests->count() > 0)
-                                            &nbsp;
-                                            @else
-                                            {{ $vt->test->satuan ?? '-' }}
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($vt->test->detailTests->count() > 0)
-                                            &nbsp;
-                                            @else
-                                            {{ $vt->test->nilai_normal ?? '-' }}
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($vt->test->detailTests->count() > 0)
-                                            &nbsp;
-                                            @else
-                                            {{ $vt->test->metode ?? '-' }}
-                                            @endif
-                                        </td>
-                                    </tr>
+                                        @php
+                                            $mainRef = nilaiRujukanText($vt->test, $visit->pasien, $usia);
+                                        @endphp
+                                        @foreach($vt->hasilLabs->whereNull('detail_test_id') as $mainTest)
+                                        <tr>
+                                            <td>{{ $counter++ }}</td>
+                                            <td><strong>{{ $vt->test->nama }}</strong></td>
+                                            <td class="text-center">
+                                                @if($mainTest->flag)
+                                                    <span class="badge {{ $mainTest->flag == 'H' ? 'bg-danger' : 'bg-warning text-dark' }}">
+                                                        {{ $mainTest->flag }}
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($vt->test->detailTests->count() > 0)
+                                                    &nbsp;
+                                                @else
+                                                    <input type="text"
+                                                        class="form-control form-control-sm hasil-input"
+                                                        name="hasil[{{ $mainTest->id }}]"
+                                                        value="{{ $mainTest->hasil }}"
+                                                        data-test-id="{{ $mainTest->id }}"
+                                                        data-min-ref="{{ $mainRef['min'] }}"
+                                                        data-max-ref="{{ $mainRef['max'] }}">
+                                                @endif
+                                            </td>
+                                            <td>{{ $vt->test->satuan ?? '-' }}</td>
+                                            <td>{{ $vt->test->nilai_normal ?? '-' }}</td>
+                                            {{-- <td>{{ $mainRef['text'] }}</td> --}}
+                                            <td>{{ $vt->test->metode ?? '-' }}</td>
+                                        </tr>
+                                        @endforeach
 
-                                    {{-- Detail tests --}}
-                                    @foreach($vt->test->detailTests as $detailTest)
-                                    @php
-                                    $detailHasil = $vt->hasilLabs->where('detail_test_id', $detailTest->id)->first();
-                                    @endphp
-                                    @if($detailHasil)
-                                    <tr>
-                                        <td></td>
-                                        <td style="padding-left: 30px;">{{ $detailTest->nama }}</td>
-                                        <td class="text-center">
-                                            @if($detailHasil->flag)
-                                            @if($detailHasil->flag == 'H')
-                                            <span class="badge bg-danger">H</span>
-                                            @else
-                                            <span class="badge bg-warning text-dark">L</span>
+                                        @foreach($vt->test->detailTests as $detailTest)
+                                            @php
+                                                $detailHasil = $vt->hasilLabs->where('detail_test_id', $detailTest->id)->first();
+                                                $detailRef   = nilaiRujukanText($detailTest, $visit->pasien, $usia);
+                                            @endphp
+                                            @if($detailHasil)
+                                            <tr>
+                                                <td></td>
+                                                <td style="padding-left: 30px;">{{ $detailTest->nama }}</td>
+                                                <td class="text-center">
+                                                    @if($detailHasil->flag)
+                                                        <span class="badge {{ $detailHasil->flag == 'H' ? 'bg-danger' : 'bg-warning text-dark' }}">
+                                                            {{ $detailHasil->flag }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <input type="text"
+                                                        class="form-control form-control-sm hasil-input"
+                                                        name="hasil[{{ $detailHasil->id }}]"
+                                                        value="{{ $detailHasil->hasil }}"
+                                                        data-test-id="{{ $detailHasil->id }}"
+                                                        data-min-ref="{{ $detailRef['min'] }}"
+                                                        data-max-ref="{{ $detailRef['max'] }}">
+                                                </td>
+                                                <td>{{ $detailTest->satuan ?? '-' }}</td>
+                                                <td>{{ $detailTest->nilai_normal ?? '-' }}</td>
+                                                {{-- <td>{{ $detailRef['text'] }}</td> --}}
+                                                <td>{{ $vt->test->metode ?? '-' }}</td>
+                                            </tr>
                                             @endif
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <input type="text" class="form-control form-control-sm hasil-input"
-                                                name="hasil[{{ $detailHasil->id }}]" value="{{ $detailHasil->hasil }}"
-                                                data-test-id="{{ $detailHasil->id }}"
-                                                data-min-ref="{{ $detailTest->min }}"
-                                                data-max-ref="{{ $detailTest->max }}">
-                                        </td>
-                                        <td>{{ $detailTest->satuan ?? '-' }}</td>
-                                        <td>
-                                            {{ $detailTest->nilai_normal ?? '-' }}
-                                        </td>
-                                        <td>{{ $vt->test->metode ?? '-' }}</td>
-                                    </tr>
-                                    @endif
-                                    @endforeach
-                                    @endforeach
+                                        @endforeach
                                     @endforeach
                                 </tbody>
                             </table>

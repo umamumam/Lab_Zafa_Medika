@@ -110,9 +110,9 @@
                                         <option value="Umum" {{ old('nilai_normals_data.' . $index . '.jenis_kelamin' ,
                                             isset($data['jenis_kelamin']) ? $data['jenis_kelamin'] : '' )=='Umum'
                                             ? 'selected' : '' }}>Umum</option>
-                                        <option value="Laki-laki" {{ old('nilai_normals_data.' . $index
+                                        <option value="Laki - Laki" {{ old('nilai_normals_data.' . $index
                                             . '.jenis_kelamin' , isset($data['jenis_kelamin']) ? $data['jenis_kelamin']
-                                            : '' )=='Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                            : '' )=='Laki - Laki' ? 'selected' : '' }}>Laki - Laki</option>
                                         <option value="Perempuan" {{ old('nilai_normals_data.' . $index
                                             . '.jenis_kelamin' , isset($data['jenis_kelamin']) ? $data['jenis_kelamin']
                                             : '' )=='Perempuan' ? 'selected' : '' }}>Perempuan</option>
@@ -219,7 +219,7 @@
                                         name="nilai_normals_data[0][jenis_kelamin]" required
                                         style="background-color: white; border-radius: 6px;">
                                         <option value="Umum">Umum</option>
-                                        <option value="Laki-laki">Laki-laki</option>
+                                        <option value="Laki - Laki">Laki - Laki</option>
                                         <option value="Perempuan">Perempuan</option>
                                     </select>
                                 </div>
@@ -293,7 +293,7 @@
                         required
                         style="background-color: white; border-radius: 6px;">
                         <option value="Umum">Umum</option>
-                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Laki - Laki">Laki - Laki</option>
                         <option value="Perempuan">Perempuan</option>
                     </select>
                 </div>

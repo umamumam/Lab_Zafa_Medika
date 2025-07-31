@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('test_id')->nullable()->constrained('tests')->onDelete('cascade');
             $table->foreignId('detail_test_id')->nullable()->constrained('detail_tests')->onDelete('cascade');
-            $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan', 'Umum'])->default('Umum');
+            $table->enum('jenis_kelamin', ['Laki - Laki', 'Perempuan', 'Umum'])->default('Umum');
             $table->integer('usia_min')->nullable();
             $table->integer('usia_max')->nullable();
             // $table->string('satuan');

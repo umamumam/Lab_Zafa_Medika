@@ -44,7 +44,7 @@ class TestController extends Controller
 
             $request->validate([
                 'nilai_normals_data' => 'nullable|array',
-                'nilai_normals_data.*.jenis_kelamin' => ['required_with:nilai_normals_data', Rule::in(['Laki-laki', 'Perempuan', 'Umum'])],
+                'nilai_normals_data.*.jenis_kelamin' => ['required_with:nilai_normals_data', Rule::in(['Laki - Laki', 'Perempuan', 'Umum'])],
                 'nilai_normals_data.*.usia_min' => 'nullable|integer|min:0',
                 'nilai_normals_data.*.usia_max' => 'nullable|integer|min:0|gte:nilai_normals_data.*.usia_min',
                 'nilai_normals_data.*.type' => ['required_with:nilai_normals_data', Rule::in(['Single', 'Range'])],
@@ -101,7 +101,7 @@ class TestController extends Controller
 
             $request->validate([
                 'nilai_normals_data' => 'nullable|array',
-                'nilai_normals_data.*.jenis_kelamin' => ['required_with:nilai_normals_data', Rule::in(['Laki-laki', 'Perempuan', 'Umum'])],
+                'nilai_normals_data.*.jenis_kelamin' => ['required_with:nilai_normals_data', Rule::in(['Laki - Laki', 'Perempuan', 'Umum'])],
                 'nilai_normals_data.*.usia_min' => 'nullable|integer|min:0',
                 'nilai_normals_data.*.usia_max' => 'nullable|integer|min:0|gte:nilai_normals_data.*.usia_min',
                 'nilai_normals_data.*.type' => ['required_with:nilai_normals_data', Rule::in(['Single', 'Range'])],

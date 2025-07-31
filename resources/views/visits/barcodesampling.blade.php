@@ -74,7 +74,7 @@
                             <td class="text-center">
                                 @foreach($samples as $sampel)
                                 @php
-                                $badge = $badgeMap[$sampel] ?? ['label' => $sampel, 'class' => 'badge-dark'];
+                                $badge = $badgeMap[$sampel] ?? ['label' => $sampel, 'class' => 'badge-secondary'];
                                 @endphp
                                 <span class="badge {{ $badge['class'] }}">{{ $badge['label'] }}</span>
                                 @endforeach
