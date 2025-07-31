@@ -37,117 +37,109 @@ class HasilLabController extends Controller
         return view('hasil_lab.edit', compact('visit'));
     }
 
-public function update(Request $request, $visitId)
-{
-    $request->validate([
-        'hasil'   => 'required|array',
-        'hasil.*' => 'nullable|string',
-        'kesan'   => 'nullable|string',
-        'catatan' => 'nullable|string',
-    ]);
+    public function update(Request $request, $visitId)
+    {
+        $request->validate([
+            'hasil'   => 'required|array',
+            'hasil.*' => 'nullable|string',
+            'kesan'   => 'nullable|string',
+            'catatan' => 'nullable|string',
+        ]);
 
-    DB::beginTransaction();
-    try {
-        // ambil data pasien sekali saja
-        $visit  = Visit::with('pasien')->findOrFail($visitId);
-        $pasien = $visit->pasien;
-        $usia   = $pasien->tgl_lahir->age; // usia dalam tahun
+        DB::beginTransaction();
+        try {
+            $visit  = Visit::with('pasien')->findOrFail($visitId);
+            $pasien = $visit->pasien;
+            $usia   = $pasien->tgl_lahir->age;
 
-        foreach ($request->hasil as $id => $value) {
-            $hasilLab = HasilLab::with(['detailTest', 'visitTest.test'])->findOrFail($id);
-            $data     = ['hasil' => $value !== '' ? $value : null];
+            foreach ($request->hasil as $id => $value) {
+                $hasilLab = HasilLab::with(['detailTest', 'visitTest.test'])->findOrFail($id);
+                $data     = ['hasil' => $value !== '' ? $value : null];
 
-            // hitung flag jika hasil berupa angka
-            if (is_numeric($value)) {
-                $ref = null;
+                if (is_numeric($value)) {
+                    $ref = null;
 
-                // 1) Cari referensi di detailTest dulu
-                if ($hasilLab->detailTest) {
-                    $ref = NilaiNormal::query()
-                        ->where('detail_test_id', $hasilLab->detailTest->id)
-                        ->where(function ($q) use ($pasien, $usia) {
-                            $q->where('jenis_kelamin', $pasien->jenis_kelamin)
-                              ->orWhere('jenis_kelamin', 'Umum');
-                        })
-                        ->where(function ($q) use ($usia) {
-                            $q->whereNull('usia_min')
-                              ->orWhere('usia_min', '<=', $usia);
-                        })
-                        ->where(function ($q) use ($usia) {
-                            $q->whereNull('usia_max')
-                              ->orWhere('usia_max', '>=', $usia);
-                        })
-                        ->orderByDesc('jenis_kelamin') // L/P dulu, baru Umum
-                        ->first();
-                }
+                    if ($hasilLab->detailTest) {
+                        $ref = NilaiNormal::query()
+                            ->where('detail_test_id', $hasilLab->detailTest->id)
+                            ->where(function ($q) use ($pasien, $usia) {
+                                $q->where('jenis_kelamin', $pasien->jenis_kelamin)
+                                    ->orWhere('jenis_kelamin', 'Umum');
+                            })
+                            ->where(function ($q) use ($usia) {
+                                $q->whereNull('usia_min')
+                                    ->orWhere('usia_min', '<=', $usia);
+                            })
+                            ->where(function ($q) use ($usia) {
+                                $q->whereNull('usia_max')
+                                    ->orWhere('usia_max', '>=', $usia);
+                            })
+                            ->orderByDesc('jenis_kelamin')
+                            ->first();
+                    }
 
-                // 2) Kalau tidak ada detailTest, ambil dari test utama
-                if (!$ref && $hasilLab->visitTest && $hasilLab->visitTest->test) {
-                    $ref = NilaiNormal::query()
-                        ->where('test_id', $hasilLab->visitTest->test->id)
-                        ->where(function ($q) use ($pasien, $usia) {
-                            $q->where('jenis_kelamin', $pasien->jenis_kelamin)
-                              ->orWhere('jenis_kelamin', 'Umum');
-                        })
-                        ->where(function ($q) use ($usia) {
-                            $q->whereNull('usia_min')
-                              ->orWhere('usia_min', '<=', $usia);
-                        })
-                        ->where(function ($q) use ($usia) {
-                            $q->whereNull('usia_max')
-                              ->orWhere('usia_max', '>=', $usia);
-                        })
-                        ->orderByDesc('jenis_kelamin')
-                        ->first();
-                }
+                    if (!$ref && $hasilLab->visitTest && $hasilLab->visitTest->test) {
+                        $ref = NilaiNormal::query()
+                            ->where('test_id', $hasilLab->visitTest->test->id)
+                            ->where(function ($q) use ($pasien, $usia) {
+                                $q->where('jenis_kelamin', $pasien->jenis_kelamin)
+                                    ->orWhere('jenis_kelamin', 'Umum');
+                            })
+                            ->where(function ($q) use ($usia) {
+                                $q->whereNull('usia_min')
+                                    ->orWhere('usia_min', '<=', $usia);
+                            })
+                            ->where(function ($q) use ($usia) {
+                                $q->whereNull('usia_max')
+                                    ->orWhere('usia_max', '>=', $usia);
+                            })
+                            ->orderByDesc('jenis_kelamin')
+                            ->first();
+                    }
 
-                if ($ref) {
-                    $numericValue = floatval($value);
+                    if ($ref) {
+                        $numericValue = floatval($value);
 
-                    if ($ref->type === 'Range') {
-                        $minRef = floatval($ref->min);
-                        $maxRef = floatval($ref->max);
-                        if ($numericValue > $maxRef) {
-                            $data['flag'] = 'H';
-                        } elseif ($numericValue < $minRef) {
-                            $data['flag'] = 'L';
+                        if ($ref->type === 'Range') {
+                            $minRef = floatval($ref->min);
+                            $maxRef = floatval($ref->max);
+                            if ($numericValue > $maxRef) {
+                                $data['flag'] = 'H';
+                            } elseif ($numericValue < $minRef) {
+                                $data['flag'] = 'L';
+                            } else {
+                                $data['flag'] = null;
+                            }
                         } else {
-                            $data['flag'] = null;
+                            $refValue = floatval($ref->min);
+                            if ($numericValue > $refValue) {
+                                $data['flag'] = 'H';
+                            } elseif ($numericValue < $refValue) {
+                                $data['flag'] = 'L';
+                            } else {
+                                $data['flag'] = null;
+                            }
                         }
                     } else {
-                        // Single (nilai tunggal)
-                        $refValue = floatval($ref->min); // diisi di kolom min
-                        if ($numericValue > $refValue) {
-                            $data['flag'] = 'H';
-                        } elseif ($numericValue < $refValue) {
-                            $data['flag'] = 'L';
-                        } else {
-                            $data['flag'] = null;
-                        }
+                        $data['flag'] = null;
                     }
                 } else {
                     $data['flag'] = null;
                 }
-            } else {
-                $data['flag'] = null;
+                $hasilLab->update($data);
             }
-
-            $hasilLab->update($data);
+            $visit->update([
+                'kesan'   => $request->kesan,
+                'catatan' => $request->catatan,
+            ]);
+            DB::commit();
+            return redirect()->route('hasil-lab.edit', $visitId)
+                ->with('success', 'Hasil laboratorium berhasil diperbarui');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal memperbarui hasil: ' . $e->getMessage());
         }
-
-        $visit->update([
-            'kesan'   => $request->kesan,
-            'catatan' => $request->catatan,
-        ]);
-
-        DB::commit();
-        return redirect()->route('hasil-lab.edit', $visitId)
-                         ->with('success', 'Hasil laboratorium berhasil diperbarui');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Gagal memperbarui hasil: ' . $e->getMessage());
     }
-}
 
 
     public function validateResults(Request $request, $visitId)
