@@ -269,108 +269,98 @@ var world_map = new jsVectorMap({
 
 var ctx = document.getElementById('statisticsChart').getContext('2d');
 
-var visitsUmumData = typeof visitsUmum !== 'undefined' ? visitsUmum : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-var visitsBPJSData = typeof visitsBPJS !== 'undefined' ? visitsBPJS : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-const allVisitData = [...visitsUmumData, ...visitsBPJSData];
-const maxDataValue = Math.max(...allVisitData);
-
-let suggestedMax = maxDataValue + (maxDataValue > 0 ? Math.ceil(maxDataValue * 0.1) : 5);
-if (suggestedMax < 5) suggestedMax = 5;
-
 var statisticsChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        datasets: [
-            {
-                label: "Kunjungan Umum",
-                borderColor: '#4dc9f7',
-                pointBackgroundColor: 'rgba(23, 125, 255, 0.14)',
-                pointRadius: 0,
-                backgroundColor: 'rgba(23, 125, 255, 0.14)',
-                legendColor: '#4dc9f7',
-                fill: true,
-                borderWidth: 2,
-                data: visitsUmumData
-            },
-            {
-                label: "Kunjungan BPJS",
-                borderColor: '#00cec9',
-                pointBackgroundColor: 'rgba(0, 206, 201, 0.6)',
-                pointRadius: 0,
-                backgroundColor: 'rgba(0, 206, 201, 0.4)',
-                legendColor: '#00cec9',
-                fill: true,
-                borderWidth: 2,
-                data: visitsBPJSData
-            }
-        ]
-    },
-    options : {
-        responsive: true,
-        maintainAspectRatio: false,
-        legend: {
-            display: false
-        },
-        tooltips: {
-            bodySpacing: 4,
-            mode:"nearest",
-            intersect: 0,
-            position:"nearest",
-            xPadding:10,
-            yPadding:10,
-            caretPadding:10
-        },
-        layout:{
-            padding:{left:5,right:5,top:15,bottom:15}
-        },
-        scales: {
-            yAxes: [{
-                ticks: {
-                    fontStyle: "500",
-                    beginAtZero: true,
-                    padding: 10,
-                    stepSize: 1,
-                    suggestedMax: suggestedMax,
-                    callback: function(value, index, values) {
-                        if (Number.isInteger(value)) {
-                            return value;
-                        }
-                    }
-                },
-                gridLines: {
-                    drawTicks: false,
-                    display: false
-                }
-            }],
-            xAxes: [{
-                gridLines: {
-                    zeroLineColor: "transparent"
-                },
-                ticks: {
-                    padding: 10,
-                    fontStyle: "500"
-                }
-            }]
-        },
-        legendCallback: function(chart) {
-            var text = [];
-            text.push('<ul class="' + chart.id + '-legend html-legend">');
-            for (var i = 0; i < chart.data.datasets.length; i++) {
-                text.push('<li><span style="background-color:' + chart.data.datasets[i].legendColor + '"></span>');
-                if (chart.data.datasets[i].label) {
-                    text.push(chart.data.datasets[i].label);
-                }
-                text.push('</li>');
-            }
-            text.push('</ul>');
-            return text.join('');
-        }
-    }
+	type: 'line',
+	data: {
+		labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+		datasets: [ {
+			label: "Subscribers",
+			borderColor: '#f3545d',
+			pointBackgroundColor: 'rgba(243, 84, 93, 0.6)',
+			pointRadius: 0,
+			backgroundColor: 'rgba(243, 84, 93, 0.4)',
+			legendColor: '#f3545d',
+			fill: true,
+			borderWidth: 2,
+			data: [154, 184, 175, 203, 210, 231, 240, 278, 252, 312, 320, 374]
+		}, {
+			label: "New Visitors",
+			borderColor: '#fdaf4b',
+			pointBackgroundColor: 'rgba(253, 175, 75, 0.6)',
+			pointRadius: 0,
+			backgroundColor: 'rgba(253, 175, 75, 0.4)',
+			legendColor: '#fdaf4b',
+			fill: true,
+			borderWidth: 2,
+			data: [256, 230, 245, 287, 240, 250, 230, 295, 331, 431, 456, 521]
+		}, {
+			label: "Active Users",
+			borderColor: '#177dff',
+			pointBackgroundColor: 'rgba(23, 125, 255, 0.6)',
+			pointRadius: 0,
+			backgroundColor: 'rgba(23, 125, 255, 0.4)',
+			legendColor: '#177dff',
+			fill: true,
+			borderWidth: 2,
+			data: [542, 480, 430, 550, 530, 453, 380, 434, 568, 610, 700, 900]
+		}]
+	},
+	options : {
+		responsive: true,
+		maintainAspectRatio: false,
+		legend: {
+			display: false
+		},
+		tooltips: {
+			bodySpacing: 4,
+			mode:"nearest",
+			intersect: 0,
+			position:"nearest",
+			xPadding:10,
+			yPadding:10,
+			caretPadding:10
+		},
+		layout:{
+			padding:{left:5,right:5,top:15,bottom:15}
+		},
+		scales: {
+			yAxes: [{
+				ticks: {
+					fontStyle: "500",
+					beginAtZero: false,
+					maxTicksLimit: 5,
+					padding: 10
+				},
+				gridLines: {
+					drawTicks: false,
+					display: false
+				}
+			}],
+			xAxes: [{
+				gridLines: {
+					zeroLineColor: "transparent"
+				},
+				ticks: {
+					padding: 10,
+					fontStyle: "500"
+				}
+			}]
+		},
+		legendCallback: function(chart) {
+			var text = [];
+			text.push('<ul class="' + chart.id + '-legend html-legend">');
+			for (var i = 0; i < chart.data.datasets.length; i++) {
+				text.push('<li><span style="background-color:' + chart.data.datasets[i].legendColor + '"></span>');
+				if (chart.data.datasets[i].label) {
+					text.push(chart.data.datasets[i].label);
+				}
+				text.push('</li>');
+			}
+			text.push('</ul>');
+			return text.join('');
+		}
+	}
 });
-
-document.getElementById('myChartLegend').innerHTML = statisticsChart.generateLegend();
 
 var myLegendContainer = document.getElementById("myChartLegend");
 

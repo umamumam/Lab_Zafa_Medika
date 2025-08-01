@@ -177,7 +177,7 @@
     <script src="{{ asset('kaiadmin/assets/js/setting-demo.js') }}"></script>
     <script src="{{ asset('kaiadmin/assets/js/demo.js') }}"></script>
     <script>
-        $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
+        $("#lineChart").sparkline([100, 110], {
         type: "line",
         height: "70",
         width: "100%",
