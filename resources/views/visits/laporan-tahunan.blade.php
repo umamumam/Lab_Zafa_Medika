@@ -4,15 +4,23 @@
 <div class="page-inner">
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h4 class="mb-3">Laporan Tahunan Pemeriksaan Laboratorium - {{ $tahun }}</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Laporan Tahunan Pemeriksaan Laboratorium - {{ $tahun }}</h4>
+                <div>
+                    <a href="{{ route('visits.export.tahunan.excel', ['tahun' => $tahun]) }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </a>
+                </div>
+            </div>
+            <hr class="mt-0 mb-3">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <form method="GET" action="{{ route('visits.laporan.tahunan') }}" class="form-inline d-flex">
-                        <select name="tahun" class="form-control mr-2">
+                        <select name="tahun" class="form-control me-2">
                             @for($year = date('Y'); $year >= 2020; $year--)
                             <option value="{{ $year }}" {{ $tahun==$year ? 'selected' : '' }}>{{ $year }}</option>
                             @endfor
-                        </select>&nbsp;
+                        </select>
                         <button type="submit" class="btn btn-primary"
                             style="height: 38px; padding: 0 12px; font-size: 12px;">
                             <i class="fas fa-filter"></i> Filter
@@ -94,7 +102,6 @@
 
         dataRows.forEach(row => {
             if (row.classList.contains('group-separator')) {
-                // Untuk grup separator, kita perlu mengecek apakah ada anaknya yang visible
                 const grupName = row.getAttribute('data-grup').toLowerCase();
                 const nextRows = getNextRowsUntilNextSeparator(row);
 
@@ -102,7 +109,6 @@
                     row.style.display = '';
                     nextRows.forEach(r => r.style.display = '');
                 } else {
-                    // Cek apakah ada data row dalam grup ini yang match
                     const hasVisibleChild = Array.from(nextRows).some(r => {
                         const nama = r.getAttribute('data-nama').toLowerCase();
                         return nama.includes(searchTerm);
@@ -118,7 +124,6 @@
                 const nama = row.getAttribute('data-nama').toLowerCase();
                 if (nama.includes(searchTerm)) {
                     row.style.display = '';
-                    // Tampilkan juga parent separator-nya
                     const separator = findParentSeparator(row);
                     if (separator) separator.style.display = '';
                 } else {

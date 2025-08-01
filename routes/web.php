@@ -60,6 +60,9 @@ Route::get('/visits/label/{no_order}', [VisitController::class, 'cetakLabel'])->
 Route::get('/visits/nota/{no_order}', [VisitController::class, 'cetakNota'])->name('visits.cetak.nota');
 Route::get('/visits/barcode/{no_order}', [VisitController::class, 'cetakBarcode'])->name('visits.cetak.barcode');
 Route::get('/visits/{id}/proses', [VisitController::class, 'proses'])->name('visits.proses');
+Route::get('/visits/laporan-pembayaran/excel', [VisitController::class, 'exportLaporanPembayaranExcel'])->name('visits.export.excel');
+Route::get('/visits/laporan-pembayaran/pdf', [VisitController::class, 'exportLaporanPembayaranPdf'])->name('visits.export.pdf');
+Route::get('/visits/laporan-tahunan/excel', [VisitController::class, 'exportLaporanTahunanExcel'])->name('visits.export.tahunan.excel');
 Route::get('laporan-pembayaran', [VisitController::class, 'laporanPembayaran'])->name('laporan.pembayaran');
 Route::get('visits/laporan-tahunan', [VisitController::class, 'laporanTahunan'])->name('visits.laporan.tahunan');
 Route::get('/hasil-lab/print/{no_order}', [HasilLabController::class, 'print'])->name('hasil-lab.print');

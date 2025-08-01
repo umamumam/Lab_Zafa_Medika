@@ -17,7 +17,10 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Riskihajar\Terbilang\Terbilang;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Config;
+use App\Exports\LaporanPembayaranExport;
+use App\Exports\LaporanTahunanExport;
 use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
 use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
 
@@ -676,5 +679,66 @@ class VisitController extends Controller
         $pdf = Pdf::loadView('visits.laporan-kasir-harian', $data)
             ->setPaper('a4', 'portrait');
         return $pdf->stream('laporan_kasir_harian_' . $tanggal . '.pdf');
+    }
+    public function exportLaporanPembayaranExcel()
+    {
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests', 'penerimaan.metodeBayar', 'penerimaan.user'])
+            ->whereHas('penerimaan', function ($query) {
+                $query->where('status', 'Terklaim');
+            })
+            ->orderBy('tgl_order', 'desc')
+            ->get();
+        return Excel::download(new LaporanPembayaranExport($visits), 'laporan_pembayaran.xlsx');
+    }
+    public function exportLaporanPembayaranPdf()
+    {
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests', 'penerimaan.metodeBayar', 'penerimaan.user'])
+            ->whereHas('penerimaan', function ($query) {
+                $query->where('status', 'Terklaim');
+            })
+            ->orderBy('tgl_order', 'desc')
+            ->get();
+        $pdf = Pdf::loadView('visits.laporan-pembayaran-pdf', compact('visits'))
+            ->setPaper('a4', 'landscape');
+        return $pdf->stream('laporan_pembayaran.pdf');
+    }
+    public function exportLaporanTahunanExcel(Request $request)
+    {
+        $tahun = $request->input('tahun', now()->year);
+        $tests = Test::with(['visitTests.visit'])
+            ->orderBy('grup_test')
+            ->orderBy('nama')
+            ->get()
+            ->groupBy('grup_test');
+        $laporan = [];
+        $currentGroup = null;
+        foreach ($tests as $grup => $testGroup) {
+            if ($currentGroup !== $grup) {
+                $laporan[] = [
+                    'is_separator' => true,
+                    'grup' => $grup
+                ];
+                $currentGroup = $grup;
+            }
+            foreach ($testGroup as $test) {
+                $perBulan = [];
+                for ($bulan = 1; $bulan <= 12; $bulan++) {
+                    $jumlah = VisitTest::where('test_id', $test->id)
+                        ->whereHas('visit', function ($q) use ($tahun, $bulan) {
+                            $q->whereYear('tgl_order', $tahun)
+                                ->whereMonth('tgl_order', $bulan);
+                        })
+                        ->count();
+                    $perBulan[$bulan] = $jumlah;
+                }
+                $laporan[] = [
+                    'is_separator' => false,
+                    'grup' => $grup,
+                    'nama' => $test->nama,
+                    'per_bulan' => $perBulan
+                ];
+            }
+        }
+        return Excel::download(new LaporanTahunanExport($laporan, $tahun), 'laporan_tahunan_' . $tahun . '.xlsx');
     }
 }
