@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use App\Models\Test;
+use App\Models\Paket;
 use App\Models\Visit;
 use App\Models\Dokter;
 use App\Models\Pasien;
@@ -18,9 +19,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Riskihajar\Terbilang\Terbilang;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\LaporanTahunanExport;
 use Illuminate\Support\Facades\Config;
 use App\Exports\LaporanPembayaranExport;
-use App\Exports\LaporanTahunanExport;
 use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
 use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
 
@@ -28,7 +29,7 @@ class VisitController extends Controller
 {
     public function index()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'visitTests.test', 'ruangan'])
+        $visits = Visit::with(['pasien', 'dokter', 'visitTests.test', 'ruangan', 'paket'])
             ->orderBy('tgl_order', 'desc')
             ->get();
 
@@ -42,6 +43,7 @@ class VisitController extends Controller
         $tests = Test::where('status', 'Aktif')->get();
         $vouchers = Voucher::where('status', 'Aktif')->get();
         $metodePembayarans = Metodebyr::all();
+        $pakets = Paket::where('status', 'Aktif')->get();
 
         // Generate preview nomor order
         $today = now()->format('Ymd');
@@ -61,7 +63,8 @@ class VisitController extends Controller
             'tests',
             'vouchers',
             'metodePembayarans',
-            'no_order'
+            'no_order',
+            'pakets'
         ));
     }
     public function store(Request $request)
@@ -73,12 +76,17 @@ class VisitController extends Controller
             'ruangan_id' => 'nullable|exists:ruangans,id',
             'diagnosa' => 'nullable|string',
             'jenis_order' => 'required|in:Reguler,Cito',
-            'tests' => 'required|array',
-            'tests.*.test_id' => 'required|exists:tests,id',
-            'tests.*.jumlah' => 'required|integer|min:1',
             'voucher_id' => 'nullable|exists:vouchers,id',
             'metodebyr_id' => 'nullable|exists:metodebyrs,id',
+            'paket_id' => 'nullable|exists:pakets,id',
+            // 'tests' hanya dibutuhkan jika tidak ada paket_id
+            'tests' => 'nullable|array',
+            'tests.*.test_id' => 'required_with:tests|exists:tests,id',
+            'tests.*.jumlah' => 'required_with:tests|integer|min:1',
         ]);
+        if (!$request->filled('paket_id') && (!isset($request->tests) || empty($request->tests))) {
+            return back()->withErrors(['general' => 'Pilih setidaknya satu paket atau satu tes.'])->withInput();
+        }
 
         DB::beginTransaction();
 
@@ -94,6 +102,8 @@ class VisitController extends Controller
             }
 
             $no_order = $prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
+
+            // Buat entri Visit
             $visit = Visit::create([
                 'no_order' => $no_order,
                 'tgl_order' => $today,
@@ -105,53 +115,54 @@ class VisitController extends Controller
                 'diagnosa' => $request->diagnosa,
                 'jenis_order' => $request->jenis_order,
                 'total_tagihan' => 0,
+                'total_diskon' => 0,
                 'voucher_id' => $request->voucher_id,
                 'metodebyr_id' => $request->metodebyr_id,
+                'dibayar' => 0,
                 'status_pembayaran' => 'Belum Lunas',
                 'status_order' => 'Sampling',
+                'paket_id' => $request->paket_id,
             ]);
-            $totalTagihan = 0;
-            foreach ($request->tests as $test) {
-                $testModel = Test::find($test['test_id']);
-                $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
-                $subtotal = $harga * $test['jumlah'];
-                VisitTest::create([
-                    'visit_id' => $visit->id,
-                    'test_id' => $test['test_id'],
-                    'harga' => $harga,
-                    'jumlah' => $test['jumlah'],
-                    'subtotal' => $subtotal,
-                ]);
-                $totalTagihan += $subtotal;
-            }
-            if ($request->voucher_id) {
-                $voucher = Voucher::find($request->voucher_id);
-                if ($voucher) {
-                    $totalTagihan -= $voucher->nilai_diskon;
-                    if ($totalTagihan < 0) {
-                        $totalTagihan = 0;
+
+            if ($request->filled('paket_id')) {
+                $paket = Paket::with('paketItems.test')->findOrFail($request->paket_id);
+                foreach ($paket->paketItems as $paketItem) {
+                    $testModel = $paketItem->test;
+                    if ($testModel) {
+                        $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
+                        $subtotal = $harga * $paketItem->jumlah;
+                        VisitTest::create([
+                            'visit_id' => $visit->id,
+                            'test_id' => $testModel->id,
+                            'harga' => $harga,
+                            'jumlah' => $paketItem->jumlah,
+                            'subtotal' => $subtotal,
+                        ]);
                     }
                 }
-            }
-            $visit->total_tagihan = $totalTagihan;
-            $visit->dibayar = 0;
-            if ($request->jenis_pasien == 'BPJS') {
-                $visit->total_tagihan = 0;
-                $visit->status_pembayaran = 'Lunas';
-                $visit->dibayar = 0;
             } else {
-                $visit->status_pembayaran = ($totalTagihan <= 0) ? 'Lunas' : 'Belum Lunas';
-                if ($totalTagihan <= 0) {
-                    $visit->dibayar = 0;
+                foreach ($request->tests as $test) {
+                    $testModel = Test::find($test['test_id']);
+                    $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
+                    $subtotal = $harga * $test['jumlah'];
+
+                    VisitTest::create([
+                        'visit_id' => $visit->id,
+                        'test_id' => $test['test_id'],
+                        'harga' => $harga,
+                        'jumlah' => $test['jumlah'],
+                        'subtotal' => $subtotal,
+                    ]);
                 }
             }
-            $visit->save();
+            $visit->calculateTotal();
+
             DB::commit();
             return redirect()->route('visits.show', $visit->id)
                 ->with('success', 'Order berhasil dibuat dengan nomor: ' . $no_order);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal membuat order: ' . $e->getMessage());
+            return back()->with('error', 'Gagal membuat order: ' . $e->getMessage())->withInput();
         }
     }
     public function show($id)
@@ -163,7 +174,8 @@ class VisitController extends Controller
             'voucher',
             'metodePembayaran',
             'visitTests.test',
-            'user'
+            'user',
+            'paket'
         ])->findOrFail($id);
         $metodePembayarans = Metodebyr::all();
         return view('visits.show', compact('visit', 'metodePembayarans'));
@@ -177,7 +189,8 @@ class VisitController extends Controller
             'dokter',
             'ruangan.dokter',
             'voucher',
-            'metodePembayaran'
+            'metodePembayaran',
+            'paket'
         ])->findOrFail($id);
         $pasiens = Pasien::all();
         $dokters = Dokter::where('status', 'Aktif')->get();
@@ -185,6 +198,7 @@ class VisitController extends Controller
         $tests = Test::where('status', 'Aktif')->get();
         $vouchers = Voucher::where('status', 'Aktif')->get();
         $metodePembayarans = Metodebyr::all();
+        $pakets = Paket::where('status', 'Aktif')->get();
 
         return view('visits.edit', compact(
             'visit',
@@ -193,7 +207,8 @@ class VisitController extends Controller
             'ruangans',
             'tests',
             'vouchers',
-            'metodePembayarans'
+            'metodePembayarans',
+            'pakets'
         ));
     }
 
@@ -206,17 +221,25 @@ class VisitController extends Controller
             'ruangan_id' => 'nullable|exists:ruangans,id',
             'diagnosa' => 'nullable|string',
             'jenis_order' => 'required|in:Reguler,Cito',
-            'tests' => 'required|array',
-            'tests.*.test_id' => 'required|exists:tests,id',
-            'tests.*.jumlah' => 'required|integer|min:1',
-            'tests.*.id' => 'nullable|exists:visit_tests,id',
             'voucher_id' => 'nullable|exists:vouchers,id',
             'metodebyr_id' => 'nullable|exists:metodebyrs,id',
+            'paket_id' => 'nullable|exists:pakets,id',
+            // 'tests' hanya dibutuhkan jika tidak ada paket_id
+            'tests' => 'nullable|array',
+            'tests.*.test_id' => 'required_with:tests|exists:tests,id',
+            'tests.*.jumlah' => 'required_with:tests|integer|min:1',
+            'tests.*.id' => 'nullable|exists:visit_tests,id',
         ]);
+
+        if (!$request->filled('paket_id') && (!isset($request->tests) || empty($request->tests))) {
+            return back()->withErrors(['general' => 'Pilih setidaknya satu paket atau satu tes.'])->withInput();
+        }
 
         DB::beginTransaction();
         try {
             $visit = Visit::with(['visitTests'])->findOrFail($id);
+
+            // Fill data ke model Visit
             $visit->fill($request->only([
                 'pasien_id',
                 'jenis_pasien',
@@ -225,70 +248,69 @@ class VisitController extends Controller
                 'diagnosa',
                 'jenis_order',
                 'voucher_id',
-                'metodebyr_id'
+                'metodebyr_id',
+                'paket_id'
             ]));
-            $existingIds = collect($request->tests)->filter(function ($t) {
-                return isset($t['id']);
-            })->pluck('id')->toArray();
-            $visit->visitTests()->whereNotIn('id', $existingIds)->delete();
-            $totalTagihan = 0;
-            foreach ($request->tests as $test) {
-                $harga = $request->jenis_pasien == 'BPJS'
-                    ? Test::find($test['test_id'])->harga_bpjs
-                    : Test::find($test['test_id'])->harga_umum;
-                $subtotal = $harga * $test['jumlah'];
-                if (isset($test['id'])) {
-                    $visit->visitTests()
-                        ->where('id', $test['id'])
-                        ->update([
+
+            if ($request->filled('paket_id')) {
+                $visit->visitTests()->delete();
+                $paket = Paket::with('paketItems.test')->findOrFail($request->paket_id);
+                foreach ($paket->paketItems as $paketItem) {
+                    $testModel = $paketItem->test;
+                    if ($testModel) {
+                        $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
+                        $subtotal = $harga * $paketItem->jumlah;
+
+                        VisitTest::create([
+                            'visit_id' => $visit->id,
+                            'test_id' => $testModel->id,
+                            'harga' => $harga,
+                            'jumlah' => $paketItem->jumlah,
+                            'subtotal' => $subtotal,
+                        ]);
+                    }
+                }
+            } else {
+                $existingIds = collect($request->tests)->filter(function ($t) {
+                    return isset($t['id']);
+                })->pluck('id')->toArray();
+
+                $visit->visitTests()->whereNotIn('id', $existingIds)->delete();
+
+                foreach ($request->tests as $test) {
+                    $testModel = Test::find($test['test_id']);
+                    $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
+                    $subtotal = $harga * $test['jumlah'];
+
+                    if (isset($test['id'])) {
+                        $visit->visitTests()
+                            ->where('id', $test['id'])
+                            ->update([
+                                'test_id' => $test['test_id'],
+                                'harga' => $harga,
+                                'jumlah' => $test['jumlah'],
+                                'subtotal' => $subtotal
+                            ]);
+                    } else {
+                        $visit->visitTests()->create([
+                            'test_id' => $test['test_id'],
                             'harga' => $harga,
                             'jumlah' => $test['jumlah'],
                             'subtotal' => $subtotal
                         ]);
-                } else {
-                    $visit->visitTests()->create([
-                        'test_id' => $test['test_id'],
-                        'harga' => $harga,
-                        'jumlah' => $test['jumlah'],
-                        'subtotal' => $subtotal
-                    ]);
-                }
-                $totalTagihan += $subtotal;
-            }
-            if ($request->voucher_id) {
-                $voucher = Voucher::find($request->voucher_id);
-                if ($voucher) {
-                    $totalTagihan -= $voucher->nilai_diskon;
-                    if ($totalTagihan < 0) {
-                        $totalTagihan = 0;
                     }
                 }
             }
-            $visit->total_tagihan = $totalTagihan;
-            if ($request->jenis_pasien == 'BPJS') {
-                $visit->total_tagihan = 0;
-                $visit->status_pembayaran = 'Lunas';
-                $visit->dibayar = 0;
-            } else {
-                if ($visit->dibayar >= $visit->total_tagihan) {
-                    $visit->status_pembayaran = 'Lunas';
-                } else {
-                    $visit->status_pembayaran = 'Belum Lunas';
-                }
-                if ($totalTagihan <= 0) {
-                    $visit->status_pembayaran = 'Lunas';
-                    $visit->dibayar = 0;
-                }
-            }
-
             $visit->save();
+            $visit->calculateTotal();
+
             DB::commit();
 
             return redirect()->route('visits.show', $visit->id)
                 ->with('success', 'Order berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui order: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memperbarui order: ' . $e->getMessage())->withInput();
         }
     }
     public function pembayaran(Request $request, $id)
@@ -377,7 +399,7 @@ class VisitController extends Controller
     }
     public function sampling()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket'])
             ->where('status_order', 'Sampling')
             ->orderBy('tgl_order', 'desc')
             ->get();
@@ -386,7 +408,7 @@ class VisitController extends Controller
     }
     public function barcodesampling()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'visitTests.hasilLabs'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'visitTests.hasilLabs', 'paket'])
             ->whereIn('status_order', ['Sampling', 'Proses'])
             ->orderBy('tgl_order', 'desc')
             ->get();
@@ -395,7 +417,7 @@ class VisitController extends Controller
     }
     public function pemeriksaan()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket'])
             ->where('status_order', 'Proses')
             ->orderBy('tgl_order', 'desc')
             ->get();
@@ -434,7 +456,7 @@ class VisitController extends Controller
     }
     private function filterPemeriksaanByGrup($grupTest)
     {
-        return Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test'])
+        return Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket'])
             ->where('status_order', 'Proses')
             ->whereHas('visitTests.test', function ($q) use ($grupTest) {
                 $q->where('grup_test', $grupTest);
@@ -442,9 +464,19 @@ class VisitController extends Controller
             ->orderBy('tgl_order', 'desc')
             ->get();
     }
+    public function Paket()
+    {
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket'])
+            ->where('status_order', 'Proses')
+            ->whereNotNull('paket_id')
+            ->orderBy('tgl_order', 'desc')
+            ->get();
+
+        return view('visits.paket', compact('visits'));
+    }
     public function validasi()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs', 'paket'])
             ->whereIn('status_order', ['Proses', 'Selesai'])
             ->orderBy('tgl_order', 'desc')
             ->get()
@@ -468,7 +500,7 @@ class VisitController extends Controller
     }
     public function Cetak()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs', 'paket'])
             ->where('status_order', 'Selesai')
             ->orderBy('tgl_order', 'desc')
             ->get();
@@ -476,7 +508,7 @@ class VisitController extends Controller
     }
     public function Bayar()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs', 'penerimaan'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs', 'penerimaan', 'paket'])
             ->whereIn('status_pembayaran', ['Belum Lunas', 'Lunas'])
             ->whereDoesntHave('penerimaan', function ($query) {
                 $query->where('status', 'Terklaim');
@@ -488,7 +520,7 @@ class VisitController extends Controller
     }
     public function laporanPembayaran()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests', 'penerimaan.metodeBayar', 'penerimaan.user'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests', 'penerimaan.metodeBayar', 'penerimaan.user', 'paket'])
             ->whereHas('penerimaan', function ($query) {
                 $query->where('status', 'Terklaim');
             })
@@ -524,7 +556,8 @@ class VisitController extends Controller
             'visitTests.test',
             'metodePembayaran',
             'penerimaan.user',
-            'penerimaan.metodeBayar'
+            'penerimaan.metodeBayar',
+            'paket'
         ])
             ->where('no_order', $no_order)
             ->firstOrFail();
@@ -740,5 +773,26 @@ class VisitController extends Controller
             }
         }
         return Excel::download(new LaporanTahunanExport($laporan, $tahun), 'laporan_tahunan_' . $tahun . '.xlsx');
+    }
+    public function getPaketTests(Paket $paket)
+    {
+        $paket->load('paketItems.test');
+        $testsData = [];
+        foreach ($paket->paketItems as $paketItem) {
+            $test = $paketItem->test;
+            if ($test) {
+                $testsData[] = [
+                    'id' => $test->id,
+                    'kode' => $test->kode,
+                    'nama' => $test->nama,
+                    'harga_umum' => $test->harga_umum,
+                    'harga_bpjs' => $test->harga_bpjs,
+                    'grup_test' => $test->grup_test ?? '',
+                    'sub_grup' => $test->sub_grup ?? '',
+                    'jumlah_paket' => $paketItem->jumlah,
+                ];
+            }
+        }
+        return response()->json($testsData);
     }
 }

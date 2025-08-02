@@ -25,7 +25,8 @@ class Visit extends Model
         'metodebyr_id',
         'dibayar',
         'status_pembayaran',
-        'status_order'
+        'status_order',
+        'paket_id',
     ];
 
     protected $casts = [
@@ -72,22 +73,27 @@ class Visit extends Model
 
     public function calculateTotal()
     {
-        $subtotal = $this->visitTests->sum('subtotal');
-
+        $subtotal = 0;
+        if ($this->paket_id && $this->paket) {
+            if ($this->jenis_pasien === 'Umum') {
+                $subtotal = $this->paket->harga_umum;
+            } else {
+                $subtotal = $this->paket->harga_bpjs;
+            }
+        } else {
+            $subtotal = $this->visitTests->sum('subtotal');
+        }
         $diskon = 0;
         if ($this->voucher_id && $this->voucher) {
             $diskon = $this->voucher->calculateDiscount($subtotal);
         }
-
         $this->total_diskon = $diskon;
         $this->total_tagihan = $subtotal - $diskon;
-
         if ($this->dibayar >= $this->total_tagihan && $this->total_tagihan > 0) {
             $this->status_pembayaran = 'Lunas';
         } else {
             $this->status_pembayaran = 'Belum Lunas';
         }
-
         $this->save();
     }
     protected static function boot()
@@ -103,5 +109,9 @@ class Visit extends Model
     public function penerimaan()
     {
         return $this->hasOne(Penerimaan::class);
+    }
+    public function paket()
+    {
+        return $this->belongsTo(Paket::class);
     }
 }

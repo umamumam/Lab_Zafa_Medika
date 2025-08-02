@@ -278,6 +278,22 @@ const maxDataValue = Math.max(...allVisitData);
 let suggestedMax = maxDataValue + (maxDataValue > 0 ? Math.ceil(maxDataValue * 0.1) : 5);
 if (suggestedMax < 5) suggestedMax = 5;
 
+let stepSize = 1;
+if (maxDataValue > 10) {
+    stepSize = 5;
+}
+if (maxDataValue > 50) {
+    stepSize = 10;
+}
+if (maxDataValue > 100) {
+    stepSize = 20;
+}
+suggestedMax = Math.ceil(suggestedMax / stepSize) * stepSize;
+if (suggestedMax === 0 && maxDataValue === 0) {
+    suggestedMax = 5;
+    stepSize = 1;
+}
+
 var statisticsChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -331,7 +347,7 @@ var statisticsChart = new Chart(ctx, {
                     fontStyle: "500",
                     beginAtZero: true,
                     padding: 10,
-                    stepSize: 1,
+                    stepSize: stepSize,
                     suggestedMax: suggestedMax,
                     callback: function(value, index, values) {
                         if (Number.isInteger(value)) {

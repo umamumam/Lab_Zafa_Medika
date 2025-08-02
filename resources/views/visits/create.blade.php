@@ -23,7 +23,9 @@
                     <form action="{{ route('visits.store') }}" method="POST" id="orderForm">
                         @csrf
 
-                        <!-- Identitas Sampel -->
+                        {{-- Ini akan mengirimkan nilai paket_id yang dipilih ke controller --}}
+                        <input type="hidden" name="paket_id" id="hidden_paket_id" value="{{ old('paket_id') }}">
+
                         <div class="mb-4 border-bottom pb-3">
                             <h6 class="text-primary mb-3">IDENTITAS SAMPEL</h6>
                             <div class="row">
@@ -45,7 +47,6 @@
                         </div>
 
                         <div class="row g-3">
-                            <!-- Data Pasien (Kiri) -->
                             <div class="col-md-6">
                                 <h6 class="text-primary border-bottom pb-2 mb-3">DATA PASIEN</h6>
 
@@ -99,7 +100,6 @@
                                 </div>
                             </div>
 
-                            <!-- Data Dokter (Kanan) -->
                             <div class="col-md-6">
                                 <h6 class="text-primary border-bottom pb-2 mb-3">DATA PENGIRIM</h6>
 
@@ -136,7 +136,6 @@
                                     @enderror
                                 </div>
                                 <div class="row mb-3">
-
                                     <div class="form-group mb-3 col-md-6">
                                         <label for="diagnosa" class="form-label">Diagnosa</label>
                                         <input type="text" class="form-control @error('diagnosa') is-invalid @enderror"
@@ -162,9 +161,23 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Pemeriksaan -->
                             <div class="col-12">
                                 <h6 class="text-primary border-bottom pb-2 mb-3">ITEM PEMERIKSAAN</h6>
+
+                                {{-- Dropdown untuk Pilih Paket --}}
+                                <div class="form-group mb-3">
+                                    <label for="paket_id_select" class="form-label">Pilih Paket Pemeriksaan</label>
+                                    <select class="form-select select2" id="paket_id_select">
+                                        <option value="">Pilih Paket</option>
+                                        @foreach($pakets as $paket)
+                                            <option value="{{ $paket->id }}"
+                                                    data-harga-umum="{{ $paket->harga_umum }}"
+                                                    data-harga-bpjs="{{ $paket->harga_bpjs }}">
+                                                {{ $paket->kode }} - {{ $paket->nama }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
                                 <div class="table-responsive mb-3">
                                     <table class="table table-bordered table-sm">
@@ -178,9 +191,9 @@
                                             </tr>
                                         </thead>
                                         <tbody id="testItems">
-                                            <!-- Items will be added here -->
+                                            {{-- Items will be added here by JavaScript --}}
                                         </tbody>
-                                        <tfoot>
+                                        <tfoot id="individualTestControls">
                                             <tr>
                                                 <td>
                                                     <select class="form-select select2" id="test_id">
@@ -213,7 +226,6 @@
                                 </div>
                             </div>
 
-                            <!-- Voucher & Pembayaran -->
                             <div class="col-md-6">
                                 <h6 class="text-primary border-bottom pb-2 mb-3">VOUCHER DISKON</h6>
 
@@ -222,10 +234,10 @@
                                         id="voucher_id" name="voucher_id">
                                         <option value="">Pilih Voucher</option>
                                         @foreach($vouchers as $voucher)
-                                        <option value="{{ $voucher->id }}" data-value="{{ $voucher->value }}"
+                                        <option value="{{ $voucher->id }}" data-value="{{ $voucher->nilai_diskon }}"
                                             @selected(old('voucher_id')==$voucher->id)>
-                                            {{ $voucher->kode }} - {{ $voucher->nama }} ({{
-                                            number_format($voucher->value) }})
+                                            {{ $voucher->kode }} - {{ $voucher->nama }} (Diskon: Rp {{
+                                            number_format($voucher->nilai_diskon, 0, ',', '.') }})
                                         </option>
                                         @endforeach
                                     </select>
@@ -255,7 +267,6 @@
                                 </div>
                             </div>
 
-                            <!-- Ringkasan Pembayaran -->
                             <div class="col-12">
                                 <div class="bg-light p-3 rounded mb-3">
                                     <div class="row">
@@ -267,8 +278,7 @@
                                             <div class="d-flex justify-content-between mb-2">
                                                 <strong>Diskon Voucher:</strong>
                                                 <span>
-                                                    <span id="totalDiskon">0%</span>
-                                                    (<span id="totalDiskonRp">Rp 0</span>)
+                                                    <span id="totalDiskon">Rp 0</span>
                                                 </span>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
@@ -280,7 +290,6 @@
                                 </div>
                             </div>
 
-                            <!-- Catatan & Tombol -->
                             <div class="col-12">
                                 <div class="alert alert-warning mb-3">
                                     <small>
@@ -306,11 +315,10 @@
     </div>
 </div>
 
-<!-- Test Item Template -->
 <template id="testTemplate">
     <tr>
         <td>
-            <input type="hidden" name="tests[][test_id]" value="">
+            <input type="hidden" class="test-id-input" name="tests[][test_id]" value="">
             <div class="fw-bold test-name"></div>
             <small class="text-muted test-grup"></small>
         </td>
@@ -338,7 +346,6 @@
 
 <script>
     $(document).ready(function() {
-        // Initialize Select2
         $('.select2').select2({
             width: '100%',
             theme: 'bootstrap-5'
@@ -351,6 +358,8 @@
             $('#jenis_pasien').val(jenisPasien === 'BPJS' ? 'BPJS' : 'Umum').trigger('change');
             $('#tgl_lahir').val(tglLahir ? formatDate(tglLahir) : '-');
             $('#jenis_kelamin').val(jk || '-');
+            updateAllTestPrices();
+            updateTotal();
         });
         $('#ruangan_id').change(function() {
             const dokterId = $(this).find('option:selected').data('dokter');
@@ -362,61 +371,164 @@
             const testSelect = $('#test_id');
             const testId = testSelect.val();
             const testOption = testSelect.find('option:selected');
+
             if (!testId) {
-                alert('Pilih pemeriksaan terlebih dahulu');
+                alert('Pilih pemeriksaan terlebih dahulu.');
                 return;
             }
-            if ($(`input[name^="tests["][name$="[test_id]"]`).filter(function() {
-                return $(this).val() == testId;
-            }).length > 0) {
-                alert('Pemeriksaan ini sudah ditambahkan');
+            if ($(`#testItems input.test-id-input[value="${testId}"]`).length > 0) {
+                alert('Pemeriksaan ini sudah ditambahkan.');
                 return;
             }
-            const jenisPasien = $('#jenis_pasien').val();
-            const jumlah = $('#jumlah').val() || 1;
-            const harga = jenisPasien === 'BPJS'
-                ? testOption.data('harga-bpjs')
-                : testOption.data('harga-umum');
-            const subtotal = harga * jumlah;
-            const nextIndex = $('input[name^="tests["][name$="[test_id]"]').length;
-            const $newRow = $($('#testTemplate').html());
-            $newRow.find('input[name="tests[][test_id]"]').attr('name', `tests[${nextIndex}][test_id]`);
-            $newRow.find('input[name="tests[][jumlah]"]').attr('name', `tests[${nextIndex}][jumlah]`);
-            $newRow.find('input[name^="tests["][name$="[test_id]"]').val(testId);
-            $newRow.find('.test-name').text(testOption.text().split(' - ')[1].trim());
-            $newRow.find('.test-grup').text(`${testOption.data('grup')} - ${testOption.data('subgrup')}`);
-            $newRow.find('.test-harga').text(formatRupiah(harga));
-            $newRow.find('input[name^="tests["][name$="[jumlah]"]').val(jumlah);
-            $newRow.find('.test-subtotal').text(formatRupiah(subtotal));
-            $('#testItems').append($newRow);
-            updateTotal();
-            $newRow.find('input[name^="tests["][name$="[jumlah]"]').change(function() {
-                const newJumlah = $(this).val() || 1;
-                const newSubtotal = harga * newJumlah;
-                $(this).closest('tr').find('.test-subtotal').text(formatRupiah(newSubtotal));
-                updateTotal();
-            });
-            $newRow.find('.remove-test').click(function() {
-                $(this).closest('tr').remove();
-                updateTotal();
-            });
+            if ($('#hidden_paket_id').val()) {
+                alert('Anda tidak bisa menambahkan pemeriksaan individual saat paket dipilih. Kosongkan pilihan paket terlebih dahulu.');
+                testSelect.val('').trigger('change');
+                $('#jumlah').val(1);
+                return;
+            }
+
+            addTestItem(
+                testId,
+                testOption.text(),
+                testOption.data('harga-umum'),
+                testOption.data('harga-bpjs'),
+                testOption.data('grup'),
+                testOption.data('subgrup'),
+                $('#jumlah').val() || 1
+            );
+
             testSelect.val('').trigger('change');
             $('#jumlah').val(1);
         });
-        $('#jenis_pasien').change(function() {
+
+        $('#paket_id_select').change(function() {
+            const paketId = $(this).val();
+            $('#hidden_paket_id').val(paketId);
+            $('#testItems').empty();
+
+            if (paketId) {
+                disableIndividualTestControls();
+                $.ajax({
+                    url: `/api/pakets/${paketId}/tests`,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.length > 0) {
+                            response.forEach(function(test) {
+                                addTestItem(
+                                    test.id,
+                                    `${test.kode} - ${test.nama}`,
+                                    test.harga_umum,
+                                    test.harga_bpjs,
+                                    test.grup_test,
+                                    test.sub_grup,
+                                    test.jumlah_paket,
+                                    true
+                                );
+                            });
+                        } else {
+                            alert('Tidak ada pemeriksaan dalam paket ini.');
+                        }
+                        updateTotal();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Gagal mengambil data paket: ' + error);
+                        $('#paket_id_select').val('').trigger('change');
+                        $('#hidden_paket_id').val('');
+                        enableIndividualTestControls();
+                        updateTotal();
+                    }
+                });
+            } else {
+                enableIndividualTestControls();
+                updateTotal();
+            }
+        });
+
+        function disableIndividualTestControls() {
+            $('#test_id').prop('disabled', true).val('').trigger('change');
+            $('#jumlah').prop('disabled', true).val(1);
+            $('#addTest').prop('disabled', true);
+            $('#individualTestControls').hide();
+        }
+
+        function enableIndividualTestControls() {
+            $('#test_id').prop('disabled', false).val('').trigger('change');
+            $('#jumlah').prop('disabled', false).val(1);
+            $('#addTest').prop('disabled', false);
+            $('#individualTestControls').show();
+        }
+
+        function addTestItem(testId, testFullName, hargaUmum, hargaBpjs, grup, subgrup, jumlah, isFromPackage = false) {
+            const jenisPasien = $('#jenis_pasien').val();
+            const harga = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
+            const subtotal = harga * jumlah;
+
+            const nextIndex = $('#testItems tr').length;
+            const $newRow = $($('#testTemplate').html());
+
+            $newRow.find('input.test-id-input').attr('name', `tests[${nextIndex}][test_id]`).val(testId);
+
+            const $jumlahInput = $newRow.find('input.test-jumlah');
+            $jumlahInput.attr('name', `tests[${nextIndex}][jumlah]`).val(jumlah);
+
+            if (isFromPackage) {
+                $jumlahInput.prop('readonly', true).css('background-color', '#e9ecef');
+                $newRow.find('.remove-test').prop('disabled', true).hide();
+            } else {
+                $jumlahInput.change(function() {
+                    const newJumlah = $(this).val() || 1;
+                    const newSubtotal = harga * newJumlah;
+                    $(this).closest('tr').find('.test-subtotal').text(formatRupiah(newSubtotal));
+                    updateTotal();
+                });
+                $newRow.find('.remove-test').click(function() {
+                    $(this).closest('tr').remove();
+                    reindexTestItems();
+                    updateTotal();
+                });
+            }
+
+            $newRow.find('.test-name').text(testFullName.split(' - ')[1].trim());
+            $newRow.find('.test-grup').text(`${grup} - ${subgrup}`);
+            $newRow.find('.test-harga').text(formatRupiah(harga));
+            $newRow.find('.test-subtotal').text(formatRupiah(subtotal));
+
+            $('#testItems').append($newRow);
+            updateTotal();
+        }
+        function reindexTestItems() {
+            $('#testItems tr').each(function(index) {
+                $(this).find('input.test-id-input').attr('name', `tests[${index}][test_id]`);
+                $(this).find('input.test-jumlah').attr('name', `tests[${index}][jumlah]`);
+            });
+        }
+        function updateAllTestPrices() {
+            const jenisPasien = $('#jenis_pasien').val();
             $('#testItems tr').each(function() {
-                const testId = $(this).find('input[name="tests[][test_id]"]').val();
+                const testId = $(this).find('input.test-id-input').val();
                 const testOption = $(`#test_id option[value="${testId}"]`);
-                const jenisPasien = $('#jenis_pasien').val();
-                const jumlah = $(this).find('.test-jumlah').val() || 1;
-                const harga = jenisPasien === 'BPJS'
-                    ? testOption.data('harga-bpjs')
-                    : testOption.data('harga-umum');
-                const subtotal = harga * jumlah;
-                $(this).find('.test-harga').text(formatRupiah(harga));
-                $(this).find('.test-subtotal').text(formatRupiah(subtotal));
+                const isFromPackage = $(this).find('.test-jumlah').prop('readonly');
+                if (!isFromPackage) {
+                    const jumlah = $(this).find('.test-jumlah').val() || 1;
+                    const harga = jenisPasien === 'BPJS'
+                        ? testOption.data('harga-bpjs')
+                        : testOption.data('harga-umum');
+                    const subtotal = harga * jumlah;
+
+                    $(this).find('.test-harga').text(formatRupiah(harga));
+                    $(this).find('.test-subtotal').text(formatRupiah(subtotal));
+                }
             });
             updateTotal();
+        }
+
+        $('#jenis_pasien').change(function() {
+            const currentPaketId = $('#hidden_paket_id').val();
+            if (currentPaketId) {
+                $('#paket_id_select').trigger('change');
+            } else {
+                updateAllTestPrices();
+            }
         });
         $('#voucher_id').change(function() {
             updateTotal();
@@ -430,23 +542,48 @@
             return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
         function updateTotal() {
-            let total = 0;
-            $('#testItems tr').each(function() {
-                const subtotalText = $(this).find('.test-subtotal').text();
-                const subtotal = parseInt(subtotalText.replace(/\D/g, ''));
-                total += subtotal;
-            });
-            const voucherOption = $('#voucher_id option:selected');
-            const persenDiskon = voucherOption.length ? parseInt(voucherOption.data('value') || 0) : 0;
-            const nilaiDiskon = Math.round(total * (persenDiskon / 100));
-            const totalBayar = total - nilaiDiskon;
-            $('#totalTagihan').text(formatRupiah(total));
-            $('#totalDiskon').text(persenDiskon + '%');
-            $('#totalDiskonRp').text(formatRupiah(nilaiDiskon));
-            $('#totalBayar').text(formatRupiah(totalBayar));
+            let totalBiayaPemeriksaan = 0;
+            const currentPaketId = $('#hidden_paket_id').val();
+            const jenisPasien = $('#jenis_pasien').val();
+
+            if (currentPaketId) {
+                const selectedPaketOption = $('#paket_id_select option:selected');
+                if (selectedPaketOption.length > 0 && selectedPaketOption.val() !== '') {
+                    totalBiayaPemeriksaan = (jenisPasien === 'BPJS')
+                        ? selectedPaketOption.data('harga-bpjs')
+                        : selectedPaketOption.data('harga-umum');
+                }
+            } else {
+                $('#testItems tr').each(function() {
+                    const subtotalText = $(this).find('.test-subtotal').text();
+                    const subtotal = parseInt(subtotalText.replace(/\D/g, ''));
+                    if (!isNaN(subtotal)) {
+                        totalBiayaPemeriksaan += subtotal;
+                    }
+                });
+            }
+
+            const voucherValue = $('#voucher_id option:selected').data('value') || 0;
+            let diskonNominal = parseInt(voucherValue);
+            diskonNominal = Math.min(diskonNominal, totalBiayaPemeriksaan);
+
+            let totalSetelahDiskon = totalBiayaPemeriksaan - diskonNominal;
+            if (jenisPasien === 'BPJS') {
+                totalBiayaPemeriksaan = 0;
+                diskonNominal = 0;
+                totalSetelahDiskon = 0;
+            }
+
+            $('#totalTagihan').text(formatRupiah(totalBiayaPemeriksaan));
+            $('#totalDiskon').text(formatRupiah(diskonNominal));
+            $('#totalBayar').text(formatRupiah(totalSetelahDiskon));
         }
-        function formatRupiah(angka) {
-            return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        updateTotal();
+        if ($('#pasien_id').val()) {
+            $('#pasien_id').trigger('change');
+        }
+        if ($('#paket_id_select').val()) {
+            $('#paket_id_select').trigger('change');
         }
     });
 </script>

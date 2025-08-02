@@ -29,6 +29,7 @@ return new class extends Migration
             $table->integer('dibayar')->default(0);
             $table->enum('status_pembayaran', ['Belum Lunas', 'Lunas'])->default('Belum Lunas');
             $table->enum('status_order', ['Sampling', 'Proses', 'Selesai'])->default('Sampling');
+            $table->foreignId('paket_id')->nullable()->constrained('pakets')->onDelete('set null');
             $table->timestamps();
         });
     }

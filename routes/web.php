@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PaketController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\PasienController;
@@ -41,6 +42,7 @@ Route::get('/pasien/label/{norm}', [PasienController::class, 'cetakLabelIdentita
 Route::get('/pasien/{norm}/riwayat', [HasilLabController::class, 'cetakRiwayat'])->name('hasil-lab.riwayat');
 Route::resource('pasiens', PasienController::class);
 Route::get('/tests/{test}/details', [TestController::class, 'getDetails'])->name('tests.details');
+Route::get('api/pakets/{paket}/tests', [VisitController::class, 'getPaketTests'])->name('api.pakets.tests');
 Route::get('visits/sampling', [VisitController::class, 'sampling'])->name('visits.sampling');
 Route::get('visits/barcode', [VisitController::class, 'barcodesampling'])->name('visits.barcode');
 Route::get('visits/pemeriksaan', [VisitController::class, 'pemeriksaan'])->name('visits.pemeriksaan');
@@ -50,6 +52,7 @@ Route::get('/pemeriksaan/imunologiserologi', [VisitController::class, 'imunologi
 Route::get('/pemeriksaan/mikrobiologi', [VisitController::class, 'mikrobiologi'])->name('pemeriksaan.mikrobiologi');
 Route::get('/pemeriksaan/khusus', [VisitController::class, 'khusus'])->name('pemeriksaan.khusus');
 Route::get('/pemeriksaan/lainnya', [VisitController::class, 'lainnya'])->name('pemeriksaan.lainnya');
+Route::get('/pemeriksaan/paket', [VisitController::class, 'Paket'])->name('pemeriksaan.paket');
 Route::put('/visits/{visit}/status', [VisitController::class, 'updateStatus'])->name('visits.update-status');
 Route::get('/visits/validasi', [VisitController::class, 'validasi'])->name('visits.validasi');
 Route::get('/visits/cetak', [VisitController::class, 'cetak'])->name('visits.cetak');
@@ -78,3 +81,4 @@ Route::middleware(['auth'])->group(function () {
     Route::post('hasil-lab/{visit}/unvalid', [HasilLabController::class, 'unvalidateAdmin'])->name('hasil-lab.unvalid');
 });
 Route::post('penerimaan/store', [PenerimaanController::class, 'store'])->name('penerimaan.store');
+Route::resource('pakets', PaketController::class);

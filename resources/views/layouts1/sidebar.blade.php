@@ -155,6 +155,11 @@
                                     <span class="sub-item">Lainnya</span>
                                 </a>
                             </li>
+                            <li>
+                                <a href="/pemeriksaan/paket">
+                                    <span class="sub-item">Paket & MCU</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
@@ -297,6 +302,11 @@
                             <li>
                                 <a href="/detail_tests">
                                     <span class="sub-item">Master Detail Test</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/pakets">
+                                    <span class="sub-item">Master Paket</span>
                                 </a>
                             </li>
                             <li>
