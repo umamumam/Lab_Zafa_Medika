@@ -417,7 +417,7 @@ class VisitController extends Controller
     }
     public function pemeriksaan()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket', 'visitTests.jasmaniMcu'])
             ->where('status_order', 'Proses')
             ->orderBy('tgl_order', 'desc')
             ->get();
@@ -466,7 +466,7 @@ class VisitController extends Controller
     }
     public function Paket()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket', 'visitTests.jasmaniMcu'])
             ->where('status_order', 'Proses')
             ->whereNotNull('paket_id')
             ->orderBy('tgl_order', 'desc')
@@ -500,7 +500,7 @@ class VisitController extends Controller
     }
     public function Cetak()
     {
-        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs', 'paket'])
+        $visits = Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.hasilLabs', 'paket', 'visitTests.jasmaniMcu'])
             ->where('status_order', 'Selesai')
             ->orderBy('tgl_order', 'desc')
             ->get();

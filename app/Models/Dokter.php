@@ -48,4 +48,8 @@ class Dokter extends Model
     {
         return $this->hasMany(Visit::class);
     }
+    public function jasmaniMcus()
+    {
+        return $this->hasMany(JasmaniMcu::class, 'dokter_pemeriksa_id');
+    }
 }

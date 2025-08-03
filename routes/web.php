@@ -13,6 +13,7 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\HasilLabController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DetailTestController;
+use App\Http\Controllers\JasmaniMcuController;
 use App\Http\Controllers\PenerimaanController;
 
 Route::get('/', function () {
@@ -82,3 +83,11 @@ Route::middleware(['auth'])->group(function () {
 });
 Route::post('penerimaan/store', [PenerimaanController::class, 'store'])->name('penerimaan.store');
 Route::resource('pakets', PaketController::class);
+Route::get('/visits/{visitTest}/jasmani-mcu/create', [JasmaniMcuController::class, 'create'])->name('jasmani-mcu.create');
+Route::post('/visits/{visitTest}/jasmani-mcu', [JasmaniMcuController::class, 'store'])->name('jasmani-mcu.store');
+Route::get('/jasmani-mcu/{jasmaniMcu}', [JasmaniMcuController::class, 'show'])->name('jasmani-mcu.show');
+Route::get('/jasmani-mcu/{jasmaniMcu}/edit', [JasmaniMcuController::class, 'edit'])->name('jasmani-mcu.edit');
+Route::put('/jasmani-mcu/{jasmaniMcu}', [JasmaniMcuController::class, 'update'])->name('jasmani-mcu.update');
+Route::delete('/jasmani-mcu/{jasmaniMcu}', [JasmaniMcuController::class, 'destroy'])->name('jasmani-mcu.destroy');
+Route::get('/jasmani-mcu/{jasmaniMcu}/print', [JasmaniMcuController::class, 'printMcu'])->name('jasmani-mcu.print');
+Route::get('/jasmani-mcu', [JasmaniMcuController::class, 'index'])->name('jasmani-mcu.index');

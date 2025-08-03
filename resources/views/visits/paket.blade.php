@@ -53,12 +53,48 @@
                             <td>
                                 <div class="btn-group" role="group">
                                     <!-- Tombol Hasil Lab -->
-                                    <a href="{{ route('hasil-lab.edit', $visit->id) }}" class="btn btn-sm btn-primary"
-                                        title="Input Hasil">
+                                    <a href="{{ route('hasil-lab.edit', $visit->id) }}"
+                                        class="btn btn-sm btn-primary me-1" title="Input Hasil">
                                         <i class="fas fa-flask"></i>
                                     </a>
+
+                                    @php
+                                    $hasJasmaniMcuTest = false;
+                                    $jasmaniMcuVisitTest = null;
+
+                                    foreach ($visit->visitTests as $vt) {
+                                    if (stripos($vt->test->nama, 'jasmani') !== false) {
+                                    $hasJasmaniMcuTest = true;
+                                    $jasmaniMcuVisitTest = $vt;
+                                    break;
+                                    }
+                                    }
+                                    @endphp
+
+                                    @if($hasJasmaniMcuTest)
+                                    @if($jasmaniMcuVisitTest->jasmaniMcu)
+                                    {{-- Tombol Show MCU --}}
+                                    <a href="{{ route('jasmani-mcu.show', $jasmaniMcuVisitTest->jasmaniMcu->id) }}"
+                                        class="btn btn-sm btn-info me-1" title="Lihat Hasil Jasmani MCU">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    {{-- Tombol Edit MCU --}}
+                                    <a href="{{ route('jasmani-mcu.edit', $jasmaniMcuVisitTest->jasmaniMcu->id) }}"
+                                        class="btn btn-sm btn-warning me-1" title="Edit Hasil Jasmani MCU">
+                                        <i class="fas fa-user-md"></i>
+                                    </a>
+                                    @else
+                                    {{-- Tombol Input MCU --}}
+                                    <a href="{{ route('jasmani-mcu.create', $jasmaniMcuVisitTest->id) }}"
+                                        class="btn btn-sm btn-success me-1" title="Input Hasil Jasmani MCU">
+                                        <i class="fas fa-user-md"></i> MCU
+                                    </a>
+                                    @endif
+                                    @endif
                                 </div>
                             </td>
+
                         </tr>
                         @endforeach
                     </tbody>
@@ -68,4 +104,3 @@
     </div>
 </div>
 @endsection
-

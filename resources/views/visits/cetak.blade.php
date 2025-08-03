@@ -57,7 +57,7 @@
                                     {{-- Tombol Cetak --}}
                                     <a href="{{ route('hasil-lab.print', $visit->no_order) }}" target="_blank"
                                         class="btn btn-sm btn-primary" title="Cetak Hasil">
-                                        <i class="fas fa-print"></i>
+                                        <i class="fas fa-print"></i> LAB
                                     </a>
                                     @php
                                     $noHp = $visit->pasien->no_hp ?? '';
@@ -98,8 +98,31 @@
                                     @if($noWa)
                                     <a href="{{ $waLink }}" target="_blank" class="btn btn-sm btn-success"
                                         title="Kirim ke WhatsApp">
-                                        <i class="fab fa-whatsapp"></i>
+                                        <i class="fab fa-whatsapp"></i> WA
                                     </a>
+                                    @endif
+
+                                    @php
+                                    $hasJasmaniMcuTest = false;
+                                    $jasmaniMcuVisitTest = null;
+
+                                    foreach ($visit->visitTests as $vt) {
+                                        if (stripos($vt->test->nama, 'jasmani') !== false) {
+                                            $hasJasmaniMcuTest = true;
+                                            $jasmaniMcuVisitTest = $vt;
+                                            break;
+                                        }
+                                    }
+                                    @endphp
+
+                                    @if($hasJasmaniMcuTest)
+                                        @if($jasmaniMcuVisitTest->jasmaniMcu)
+                                            {{-- Tombol Cetak MCU yang baru ditambahkan --}}
+                                            <a href="{{ route('jasmani-mcu.print', $jasmaniMcuVisitTest->jasmaniMcu->id) }}" target="_blank"
+                                                class="btn btn-sm btn-secondary" title="Cetak Hasil Jasmani MCU">
+                                                <i class="fas fa-print"></i> MCU
+                                            </a>
+                                        @endif
                                     @endif
                                 </div>
                             </td>

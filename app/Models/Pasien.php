@@ -45,4 +45,8 @@ class Pasien extends Model
     {
         return $this->hasMany(Visit::class);
     }
+    public function jasmaniMcus()
+    {
+        return $this->hasMany(JasmaniMcu::class, 'pasien_id');
+    }
 }

@@ -63,4 +63,8 @@ class VisitTest extends Model
     {
         return $this->hasMany(HasilLab::class, 'visit_test_id');
     }
+    public function jasmaniMcu()
+    {
+        return $this->hasOne(JasmaniMcu::class, 'visit_test_id');
+    }
 }
