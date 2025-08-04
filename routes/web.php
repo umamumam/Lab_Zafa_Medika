@@ -91,3 +91,4 @@ Route::put('/jasmani-mcu/{jasmaniMcu}', [JasmaniMcuController::class, 'update'])
 Route::delete('/jasmani-mcu/{jasmaniMcu}', [JasmaniMcuController::class, 'destroy'])->name('jasmani-mcu.destroy');
 Route::get('/jasmani-mcu/{jasmaniMcu}/print', [JasmaniMcuController::class, 'printMcu'])->name('jasmani-mcu.print');
 Route::get('/jasmani-mcu', [JasmaniMcuController::class, 'index'])->name('jasmani-mcu.index');
+Route::get('/backup', [\App\Http\Controllers\BackupController::class, 'backup']);
