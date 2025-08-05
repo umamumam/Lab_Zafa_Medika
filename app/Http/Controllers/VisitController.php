@@ -156,7 +156,11 @@ class VisitController extends Controller
                 }
             }
             $visit->calculateTotal();
-
+            if ($request->jenis_pasien === 'BPJS') {
+                        $visit->dibayar = 0;
+                        $visit->status_pembayaran = 'Lunas';
+                        $visit->save();
+            }
             DB::commit();
             return redirect()->route('visits.show', $visit->id)
                 ->with('success', 'Order berhasil dibuat dengan nomor: ' . $no_order);
