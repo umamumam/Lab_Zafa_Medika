@@ -17,7 +17,7 @@ use App\Http\Controllers\JasmaniMcuController;
 use App\Http\Controllers\PenerimaanController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])

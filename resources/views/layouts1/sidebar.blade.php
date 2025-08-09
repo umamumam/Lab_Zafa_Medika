@@ -5,7 +5,7 @@
         <!-- Logo Header -->
         <div class="logo-header" data-background-color="white">
             <a href="/dashboard" class="logo">
-                <img src="{{ asset('logo2.png') }}" alt="navbar brand" class="navbar-brand" height="70" />
+                <img src="{{ asset('Logo2.png') }}" alt="navbar brand" class="navbar-brand" height="70" />
             </a>
             <div class="nav-toggle">
                 <button class="btn btn-toggle toggle-sidebar">
