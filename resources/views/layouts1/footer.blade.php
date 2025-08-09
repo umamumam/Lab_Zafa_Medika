@@ -3,25 +3,25 @@
         <nav class="pull-left">
             <ul class="nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="http://www.themekita.com">
-                        ThemeKita
+                    <a class="nav-link" href="#">
+                        &nbsp;
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#"> Help </a>
+                    <a class="nav-link" href="#"> &nbsp; </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#"> Licenses </a>
+                    <a class="nav-link" href="#"> &nbsp; </a>
                 </li>
             </ul>
         </nav>
         <div class="copyright">
-            2024, made with <i class="fa fa-heart heart text-danger"></i> by
-            <a href="http://www.themekita.com">ThemeKita</a>
+            2025, <i class="fa fa-copyright copyright text-danger"></i> Sistem Informasi
+            <a href="#">Lab Zafa Medika</a>
         </div>
         <div>
-            Distributed by
-            <a target="_blank" href="https://themewagon.com/">ThemeWagon</a>.
+            {{-- Distributed by --}}&nbsp;
+            <a target="_blank" href="#"></a>.
         </div>
     </div>
 </footer>
