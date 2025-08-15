@@ -88,23 +88,26 @@
                                             Cetak Nota
                                         </a>
                                         @if($visit->status_order == 'Selesai')
-                                        <a class="dropdown-item py-2" href="{{ route('hasil-lab.print', $visit->no_order) }}"
-                                            target="_blank">
+                                        <a class="dropdown-item py-2"
+                                            href="{{ route('hasil-lab.print', $visit->no_order) }}" target="_blank">
                                             Cetak Hasil
                                         </a>
                                         @endif
-                                        @if($visit->status_order == 'Sampling')
-                                        <hr>
-                                        <form action="{{ route('visits.destroy', $visit->id) }}" method="POST"
-                                            class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="dropdown-item py-2 text-danger"
-                                                onclick="return confirm('Hapus data ini?')"
-                                                style="cursor: pointer; width: 100%; text-align: left; background: none; border: none;">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                        @if($visit->status_order == 'Sampling' && auth()->user()->role == 'Admin')
+                                            <a class="dropdown-item py-2" href="{{ route('visits.edit', $visit->id) }}">
+                                                Edit
+                                            </a>
+                                            <hr>
+                                            <form action="{{ route('visits.destroy', $visit->id) }}" method="POST"
+                                                class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="dropdown-item py-2 text-danger"
+                                                    onclick="return confirm('Hapus data ini?')"
+                                                    style="cursor: pointer; width: 100%; text-align: left; background: none; border: none;">
+                                                    Hapus
+                                                </button>
+                                            </form>
                                         @endif
                                     </div>
                                 </div>

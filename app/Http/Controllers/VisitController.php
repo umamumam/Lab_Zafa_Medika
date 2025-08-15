@@ -188,14 +188,15 @@ class VisitController extends Controller
     public function edit($id)
     {
         $visit = Visit::with([
-            'visitTests.test',
             'pasien',
             'dokter',
-            'ruangan.dokter',
+            'ruangan',
             'voucher',
             'metodePembayaran',
+            'visitTests.test',
             'paket'
         ])->findOrFail($id);
+
         $pasiens = Pasien::all();
         $dokters = Dokter::where('status', 'Aktif')->get();
         $ruangans = Ruangan::all();
@@ -218,6 +219,7 @@ class VisitController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Validasi data dari form
         $request->validate([
             'pasien_id' => 'required|exists:pasiens,id',
             'jenis_pasien' => 'required|in:Umum,BPJS',
@@ -228,11 +230,10 @@ class VisitController extends Controller
             'voucher_id' => 'nullable|exists:vouchers,id',
             'metodebyr_id' => 'nullable|exists:metodebyrs,id',
             'paket_id' => 'nullable|exists:pakets,id',
-            // 'tests' hanya dibutuhkan jika tidak ada paket_id
             'tests' => 'nullable|array',
             'tests.*.test_id' => 'required_with:tests|exists:tests,id',
             'tests.*.jumlah' => 'required_with:tests|integer|min:1',
-            'tests.*.id' => 'nullable|exists:visit_tests,id',
+            'tests.*.id' => 'nullable|exists:visit_tests,id', // Validasi untuk id VisitTest yang sudah ada
         ]);
 
         if (!$request->filled('paket_id') && (!isset($request->tests) || empty($request->tests))) {
@@ -241,9 +242,10 @@ class VisitController extends Controller
 
         DB::beginTransaction();
         try {
+            // Temukan visit yang akan diupdate
             $visit = Visit::with(['visitTests'])->findOrFail($id);
 
-            // Fill data ke model Visit
+            // Update data utama visit
             $visit->fill($request->only([
                 'pasien_id',
                 'jenis_pasien',
@@ -255,8 +257,10 @@ class VisitController extends Controller
                 'metodebyr_id',
                 'paket_id'
             ]));
+            $visit->save();
 
             if ($request->filled('paket_id')) {
+                // Jika ada paket, hapus semua test yang lama dan buat yang baru
                 $visit->visitTests()->delete();
                 $paket = Paket::with('paketItems.test')->findOrFail($request->paket_id);
                 foreach ($paket->paketItems as $paketItem) {
@@ -265,8 +269,7 @@ class VisitController extends Controller
                         $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
                         $subtotal = $harga * $paketItem->jumlah;
 
-                        VisitTest::create([
-                            'visit_id' => $visit->id,
+                        $visit->visitTests()->create([
                             'test_id' => $testModel->id,
                             'harga' => $harga,
                             'jumlah' => $paketItem->jumlah,
@@ -275,10 +278,10 @@ class VisitController extends Controller
                     }
                 }
             } else {
-                $existingIds = collect($request->tests)->filter(function ($t) {
-                    return isset($t['id']);
-                })->pluck('id')->toArray();
+                // Jika tidak ada paket, tangani test satu per satu
+                $existingIds = collect($request->tests)->pluck('id')->filter()->toArray();
 
+                // Hapus test yang tidak ada di request
                 $visit->visitTests()->whereNotIn('id', $existingIds)->delete();
 
                 foreach ($request->tests as $test) {
@@ -287,15 +290,15 @@ class VisitController extends Controller
                     $subtotal = $harga * $test['jumlah'];
 
                     if (isset($test['id'])) {
-                        $visit->visitTests()
-                            ->where('id', $test['id'])
-                            ->update([
-                                'test_id' => $test['test_id'],
-                                'harga' => $harga,
-                                'jumlah' => $test['jumlah'],
-                                'subtotal' => $subtotal
-                            ]);
+                        // Update test yang sudah ada
+                        $visit->visitTests()->find($test['id'])->update([
+                            'test_id' => $test['test_id'],
+                            'harga' => $harga,
+                            'jumlah' => $test['jumlah'],
+                            'subtotal' => $subtotal
+                        ]);
                     } else {
+                        // Buat test baru
                         $visit->visitTests()->create([
                             'test_id' => $test['test_id'],
                             'harga' => $harga,
@@ -305,7 +308,8 @@ class VisitController extends Controller
                     }
                 }
             }
-            $visit->save();
+
+            // Hitung ulang total tagihan setelah perubahan
             $visit->calculateTotal();
 
             DB::commit();
