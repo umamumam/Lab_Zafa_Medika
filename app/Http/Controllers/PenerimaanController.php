@@ -14,7 +14,7 @@ class PenerimaanController extends Controller
     public function store(Request $request)
     {
         if (!in_array(Auth::user()->role, ['Kasir', 'Admin'])) {
-            return back()->with('error', 'Hanya kasir atau admin yang dapat melakukan klaim.');
+            return back()->with('error', 'Hanya kasir yang dapat melakukan klaim.');
         }
         $request->validate([
             'visit_id' => 'required|exists:visits,id',

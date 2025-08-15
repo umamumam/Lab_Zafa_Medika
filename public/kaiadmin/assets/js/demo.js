@@ -190,18 +190,20 @@ Circles.create({
 })
 
 //Notify
-$.notify({
-	icon: 'icon-bell',
-	title: 'Laboratorium Klinik Zafa Medika',
-	message: 'Selamat Datang di Dashboard Sistem',
-},{
-	type: 'secondary',
-	placement: {
-		from: "bottom",
-		align: "right"
-	},
-	time: 1000,
-});
+if (window.location.pathname === "/dashboard") {
+    $.notify({
+        icon: 'icon-bell',
+        title: 'Laboratorium Klinik Zafa Medika',
+        message: 'Selamat Datang di Dashboard Sistem',
+    },{
+        type: 'secondary',
+        placement: {
+            from: "bottom",
+            align: "right"
+        },
+        time: 1000,
+    });
+}
 
 // Jsvectormap
 var world_map = new jsVectorMap({

@@ -168,7 +168,8 @@
     <script src="{{ asset('kaiadmin/assets/js/plugin/jsvectormap/world.js') }}"></script>
 
     <!-- Sweet Alert -->
-    <script src="{{ asset('kaiadmin/assets/js/plugin/sweetalert/sweetalert.min.js') }}"></script>
+    {{-- <script src="{{ asset('kaiadmin/assets/js/plugin/sweetalert/sweetalert.min.js') }}"></script> --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Kaiadmin JS -->
     <script src="{{ asset('kaiadmin/assets/js/kaiadmin.min.js') }}"></script>
