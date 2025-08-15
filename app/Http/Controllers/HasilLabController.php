@@ -287,7 +287,7 @@ class HasilLabController extends Controller
         $pdf = PDF::loadView('hasil_lab.print', compact('visit', 'verifikator', 'tanggalValidasi', 'barcode', 'jamSampling', 'jamSelesai'))
             ->setPaper('a4', 'portrait');
 
-        return $pdf->stream('hasil_lab_' . $visit->no_order . '.pdf');
+        return $pdf->stream('Hasil_Lab_' . $visit->pasien->nama . '.pdf');
     }
 
     public function downloadByHash($hash)

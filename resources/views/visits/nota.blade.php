@@ -243,6 +243,28 @@
         </tr>
     </table>
 
+    @php
+        $keterangan = [];
+    @endphp
+
+    @if($visit->jenis_pasien == 'BPJS')
+        @php
+            $keterangan[] = 'Pasien BPJS';
+        @endphp
+    @endif
+
+    @if($visit->paket_id)
+        @php
+            $keterangan[] = 'Paket Pemeriksaan';
+        @endphp
+    @endif
+
+    @if(count($keterangan) > 0)
+    <div class="terbilang">
+        <strong>Keterangan :</strong>
+        {{ implode(', ', $keterangan) }}
+    </div>
+    @endif
     <!-- Terbilang -->
     <div class="terbilang">
         <strong>Terbilang :</strong> {{ ucwords(Terbilang::make($total)) }} Rupiah

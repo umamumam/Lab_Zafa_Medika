@@ -569,9 +569,11 @@ class VisitController extends Controller
         ])
             ->where('no_order', $no_order)
             ->firstOrFail();
+        $total_tagihan = $visit->total_tagihan;
         $subtotal = $visit->visitTests->sum('subtotal');
         $diskon = $visit->voucher ? $visit->voucher->nilai_diskon : 0;
-        $total = $subtotal - $diskon;
+        // $total = $total_tagihan - $diskon;
+        $total = $total_tagihan;
         $barcodeData = "NOTA PEMBAYARAN KLINIK ZAFA MEDIKA\n";
         $barcodeData .= "No. Order: " . $visit->no_order . "\n";
         $barcodeData .= "Pasien: " . $visit->pasien->nama . "\n";
@@ -588,6 +590,7 @@ class VisitController extends Controller
         $data = [
             'visit' => $visit,
             'subtotal' => $subtotal,
+            'total_tagihan' => $total_tagihan,
             'diskon' => $diskon,
             'total' => $total,
             'terbilang' => ucwords((new Terbilang)->make($total)),
