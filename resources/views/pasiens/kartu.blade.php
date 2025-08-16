@@ -15,7 +15,7 @@
             width: 255.1pt; /* 85mm */
             height: 153.1pt; /* 54mm */
             position: relative;
-            background-image: url('{{ public_path("kartu.png") }}');
+            background-image: url('{{ public_path("card.png") }}');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
@@ -54,8 +54,8 @@
         .label-website {
             position: absolute;
             bottom: 6pt;
-            right: 10pt;
-            font-size: 10pt;
+            right: 6pt;
+            font-size: 9.5pt;
             color: #ffffff;
         }
     </style>
@@ -73,7 +73,7 @@
             No RM: {{ $pasien->norm }}<br>
             Tgl Lahir: {{ \Carbon\Carbon::parse($pasien->tgl_lahir)->format('d-m-Y') }}
         </div>
-        <div class="label-website">www.zafamedika.com</div>
+        <div class="label-website">www.labzafamedika.com</div>
     </div>
 </body>
 </html>
