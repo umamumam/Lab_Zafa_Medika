@@ -273,7 +273,7 @@
                 </div>
             </td>
             <td style="width: 30%; text-align: center; vertical-align: top;">
-                <p>&nbsp;</p> <p>&nbsp;</p> <p>Banjarbaru Utara, {{ \Carbon\Carbon::parse($jasmaniMcu->tanggal_pemeriksaan ?? now())->format('d-m-Y') }}</p>
+                <p>&nbsp;</p> <p>&nbsp;</p> <p>Banjarbaru, {{ \Carbon\Carbon::parse($jasmaniMcu->tanggal_pemeriksaan ?? now())->format('d-m-Y') }}</p>
                 <label>Dokter Pemeriksa</label>
                 <div class="barcode-container">
                     <div class="barcode-adjustable" style="left: 0;">

@@ -247,7 +247,7 @@
             </td>
 
             <td style="width: 33%; text-align: center; vertical-align: top;">
-                <p>Banjarbaru Utara, {{ $tanggalValidasi }}</p>
+                <p>Banjarbaru, {{ $tanggalValidasi }}</p>
                 <label>Validator</label>
                 <div class="barcode-container">
                     <div class="barcode-adjustable" style="left: 3px;">

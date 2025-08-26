@@ -305,7 +305,7 @@
                 &nbsp;
             </td>
             <td style="width: 33%; text-align: center; vertical-align: top; padding-top: 50px;">
-                <p>Banjarbaru Utara, {{ $tanggalValidasi }}</p>
+                <p>Banjarbaru, {{ $tanggalValidasi }}</p>
                 <p>Petugas,</p>
                 @if ($visit->penerimaan)
                 <div style="margin: 0 50px; text-align: center; padding: 0 30px;">
