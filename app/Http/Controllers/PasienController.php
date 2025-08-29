@@ -6,6 +6,8 @@ use App\Models\Pasien;
 use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PasienController extends Controller
 {
@@ -49,6 +51,13 @@ class PasienController extends Controller
     public function update(Request $request, Pasien $pasien)
     {
         $validated = $request->validate([
+            // Tambahkan validasi untuk 'norm' dengan aturan 'unique' yang mengabaikan pasien saat ini
+            'norm' => [
+                'required',
+                'digits:6',
+                'numeric',
+                Rule::unique('pasiens')->ignore($pasien->id),
+            ],
             'nama' => 'required|max:100',
             'tgl_lahir' => 'required|date',
             'jenis_kelamin' => 'required|in:Laki - Laki,Perempuan',
