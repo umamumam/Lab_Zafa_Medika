@@ -93,7 +93,7 @@
                                             Cetak Hasil
                                         </a>
                                         @endif
-                                        @if($visit->status_order == 'Sampling' && auth()->user()->role == 'Admin')
+                                        @if(auth()->user()->role == 'Admin')
                                             <a class="dropdown-item py-2" href="{{ route('visits.edit', $visit->id) }}">
                                                 Edit
                                             </a>
