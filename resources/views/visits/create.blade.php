@@ -38,9 +38,9 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Tanggal</label>
-                                        <input type="text" class="form-control bg-light" value="{{ date('d/m/Y H:i') }}"
-                                            disabled>
+                                        <label for="tgl_order">Tanggal & Waktu Order</label>
+                                        <input type="text" name="tgl_order" id="tgl_order" class="form-control"
+                                            value="{{ old('tgl_order', $today) }}" placeholder="dd/mm/yyyy hh:ii">
                                     </div>
                                 </div>
                             </div>
@@ -170,11 +170,10 @@
                                     <select class="form-select select2" id="paket_id_select">
                                         <option value="">Pilih Paket</option>
                                         @foreach($pakets as $paket)
-                                            <option value="{{ $paket->id }}"
-                                                    data-harga-umum="{{ $paket->harga_umum }}"
-                                                    data-harga-bpjs="{{ $paket->harga_bpjs }}">
-                                                {{ $paket->kode }} - {{ $paket->nama }}
-                                            </option>
+                                        <option value="{{ $paket->id }}" data-harga-umum="{{ $paket->harga_umum }}"
+                                            data-harga-bpjs="{{ $paket->harga_bpjs }}">
+                                            {{ $paket->kode }} - {{ $paket->nama }}
+                                        </option>
                                         @endforeach
                                     </select>
                                 </div>

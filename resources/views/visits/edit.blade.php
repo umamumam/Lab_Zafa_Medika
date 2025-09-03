@@ -31,13 +31,16 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="form-label">No. Order</label>
-                                        <input type="text" class="form-control bg-light" value="{{ $visit->no_order }}" readonly>
+                                        <input type="text" class="form-control bg-light" value="{{ $visit->no_order }}"
+                                            readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Tanggal</label>
-                                        <input type="text" class="form-control bg-light" value="{{ $visit->tgl_order->format('d/m/Y H:i') }}" disabled>
+                                        <label for="tgl_order">Tanggal & Waktu Order</label>
+                                        <input type="text" name="tgl_order" id="tgl_order" class="form-control"
+                                            value="{{ old('tgl_order', $visit->tgl_order->format('d/m/Y H:i')) }}"
+                                            placeholder="dd/mm/yyyy hh:ii">
                                     </div>
                                 </div>
                             </div>
@@ -49,15 +52,16 @@
                                 <h6 class="text-primary border-bottom pb-2 mb-3">DATA PASIEN</h6>
 
                                 <div class="form-group mb-3">
-                                    <label for="pasien_id" class="form-label">Nomor RM / Nama Pasien <span class="text-danger">*</span></label>
-                                    <select class="form-select select2 @error('pasien_id') is-invalid @enderror" id="pasien_id" name="pasien_id" required>
+                                    <label for="pasien_id" class="form-label">Nomor RM / Nama Pasien <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select select2 @error('pasien_id') is-invalid @enderror"
+                                        id="pasien_id" name="pasien_id" required>
                                         <option value="">Pilih Pasien</option>
                                         @foreach($pasiens as $pasien)
-                                        <option value="{{ $pasien->id }}"
-                                            data-jenis="{{ $pasien->status_pasien }}"
+                                        <option value="{{ $pasien->id }}" data-jenis="{{ $pasien->status_pasien }}"
                                             data-tgl_lahir="{{ $pasien->tgl_lahir }}"
-                                            data-jk="{{ $pasien->jenis_kelamin }}"
-                                            @selected(old('pasien_id', $visit->pasien_id) == $pasien->id)>
+                                            data-jk="{{ $pasien->jenis_kelamin }}" @selected(old('pasien_id', $visit->
+                                            pasien_id) == $pasien->id)>
                                             {{ $pasien->norm }} - {{ $pasien->nama }}
                                         </option>
                                         @endforeach
@@ -72,7 +76,8 @@
                                         <div class="form-group">
                                             <label class="form-label">Tanggal Lahir</label>
                                             <input type="text" class="form-control bg-light" id="tgl_lahir"
-                                                value="{{ $visit->pasien->tgl_lahir ? $visit->pasien->tgl_lahir->format('d/m/Y') : '-' }}" disabled>
+                                                value="{{ $visit->pasien->tgl_lahir ? $visit->pasien->tgl_lahir->format('d/m/Y') : '-' }}"
+                                                disabled>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -85,10 +90,14 @@
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <label for="jenis_pasien" class="form-label">Status Pasien <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('jenis_pasien') is-invalid @enderror" id="jenis_pasien" name="jenis_pasien" required>
-                                        <option value="Umum" @selected(old('jenis_pasien', $visit->jenis_pasien) == 'Umum')>Umum</option>
-                                        <option value="BPJS" @selected(old('jenis_pasien', $visit->jenis_pasien) == 'BPJS')>BPJS</option>
+                                    <label for="jenis_pasien" class="form-label">Status Pasien <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select @error('jenis_pasien') is-invalid @enderror"
+                                        id="jenis_pasien" name="jenis_pasien" required>
+                                        <option value="Umum" @selected(old('jenis_pasien', $visit->jenis_pasien) ==
+                                            'Umum')>Umum</option>
+                                        <option value="BPJS" @selected(old('jenis_pasien', $visit->jenis_pasien) ==
+                                            'BPJS')>BPJS</option>
                                     </select>
                                     @error('jenis_pasien')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -102,10 +111,12 @@
 
                                 <div class="form-group mb-3">
                                     <label for="dokter_id" class="form-label">Dokter Pengirim</label>
-                                    <select class="form-select select2 @error('dokter_id') is-invalid @enderror" id="dokter_id" name="dokter_id">
+                                    <select class="form-select select2 @error('dokter_id') is-invalid @enderror"
+                                        id="dokter_id" name="dokter_id">
                                         <option value="">Pilih Dokter</option>
                                         @foreach($dokters as $dokter)
-                                        <option value="{{ $dokter->id }}" @selected(old('dokter_id', $visit->dokter_id) == $dokter->id)>
+                                        <option value="{{ $dokter->id }}" @selected(old('dokter_id', $visit->dokter_id)
+                                            == $dokter->id)>
                                             {{ $dokter->nama }} - {{ $dokter->spesialis }}
                                         </option>
                                         @endforeach
@@ -117,11 +128,11 @@
 
                                 <div class="form-group mb-3">
                                     <label for="ruangan_id" class="form-label">Faskes/Klinik</label>
-                                    <select class="form-select select2 @error('ruangan_id') is-invalid @enderror" id="ruangan_id" name="ruangan_id">
+                                    <select class="form-select select2 @error('ruangan_id') is-invalid @enderror"
+                                        id="ruangan_id" name="ruangan_id">
                                         <option value="">Pilih Ruangan</option>
                                         @foreach($ruangans as $ruangan)
-                                        <option value="{{ $ruangan->id }}"
-                                            data-dokter="{{ $ruangan->dokter_id }}"
+                                        <option value="{{ $ruangan->id }}" data-dokter="{{ $ruangan->dokter_id }}"
                                             @selected(old('ruangan_id', $visit->ruangan_id) == $ruangan->id)>
                                             {{ $ruangan->nama }}
                                         </option>
@@ -136,18 +147,22 @@
                                     <div class="form-group mb-3 col-md-6">
                                         <label for="diagnosa" class="form-label">Diagnosa</label>
                                         <input type="text" class="form-control @error('diagnosa') is-invalid @enderror"
-                                            id="diagnosa" name="diagnosa" value="{{ old('diagnosa', $visit->diagnosa) }}" maxlength="500">
+                                            id="diagnosa" name="diagnosa"
+                                            value="{{ old('diagnosa', $visit->diagnosa) }}" maxlength="500">
                                         @error('diagnosa')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
 
                                     <div class="form-group mb-3 col-md-6">
-                                        <label for="jenis_order" class="form-label">Jenis Order <span class="text-danger">*</span></label>
+                                        <label for="jenis_order" class="form-label">Jenis Order <span
+                                                class="text-danger">*</span></label>
                                         <select class="form-select @error('jenis_order') is-invalid @enderror"
                                             id="jenis_order" name="jenis_order" required>
-                                            <option value="Reguler" @selected(old('jenis_order', $visit->jenis_order) == 'Reguler')>Reguler</option>
-                                            <option value="Cito" @selected(old('jenis_order', $visit->jenis_order) == 'Cito')>Cito</option>
+                                            <option value="Reguler" @selected(old('jenis_order', $visit->jenis_order) ==
+                                                'Reguler')>Reguler</option>
+                                            <option value="Cito" @selected(old('jenis_order', $visit->jenis_order) ==
+                                                'Cito')>Cito</option>
                                         </select>
                                         @error('jenis_order')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -175,18 +190,24 @@
                                             @foreach($visit->visitTests as $index => $visitTest)
                                             <tr>
                                                 <td>
-                                                    <input type="hidden" name="tests[{{$index}}][id]" value="{{ $visitTest->id }}">
-                                                    <input type="hidden" name="tests[{{$index}}][test_id]" value="{{ $visitTest->test_id }}">
-                                                    <div class="fw-bold">{{ $visitTest->test->kode }} - {{ $visitTest->test->nama }}</div>
-                                                    <small class="text-muted">{{ $visitTest->test->grup_test }} - {{ $visitTest->test->sub_grup }}</small>
+                                                    <input type="hidden" name="tests[{{$index}}][id]"
+                                                        value="{{ $visitTest->id }}">
+                                                    <input type="hidden" name="tests[{{$index}}][test_id]"
+                                                        value="{{ $visitTest->test_id }}">
+                                                    <div class="fw-bold">{{ $visitTest->test->kode }} - {{
+                                                        $visitTest->test->nama }}</div>
+                                                    <small class="text-muted">{{ $visitTest->test->grup_test }} - {{
+                                                        $visitTest->test->sub_grup }}</small>
                                                 </td>
                                                 <td class="align-middle">
-                                                    <input type="number" class="form-control form-control-sm test-jumlah"
+                                                    <input type="number"
+                                                        class="form-control form-control-sm test-jumlah"
                                                         name="tests[{{$index}}][jumlah]" min="1" max="10"
                                                         value="{{ old('tests.'.$index.'.jumlah', $visitTest->jumlah) }}">
                                                 </td>
                                                 <td class="test-harga align-middle">Rp {{($visitTest->harga) }}</td>
-                                                <td class="test-subtotal align-middle">Rp {{($visitTest->subtotal) }}</td>
+                                                <td class="test-subtotal align-middle">Rp {{($visitTest->subtotal) }}
+                                                </td>
                                                 <td class="align-middle text-center">
                                                     <button type="button" class="btn btn-danger btn-sm remove-test">
                                                         <i class="fas fa-trash-alt"></i>
@@ -212,11 +233,13 @@
                                                     </select>
                                                 </td>
                                                 <td>
-                                                    <input type="number" class="form-control" id="jumlah" min="1" max="10" value="1">
+                                                    <input type="number" class="form-control" id="jumlah" min="1"
+                                                        max="10" value="1">
                                                 </td>
                                                 <td colspan="2">&nbsp;</td>
                                                 <td>
-                                                    <button type="button" class="btn btn-primary btn-sm w-100" id="addTest">
+                                                    <button type="button" class="btn btn-primary btn-sm w-100"
+                                                        id="addTest">
                                                         <i class="fas fa-plus me-1"></i>
                                                     </button>
                                                 </td>
@@ -235,10 +258,10 @@
                                         id="voucher_id" name="voucher_id" disabled>
                                         <option value="">Pilih Voucher</option>
                                         @foreach($vouchers as $voucher)
-                                        <option value="{{ $voucher->id }}"
-                                            data-value="{{ $voucher->value }}"
+                                        <option value="{{ $voucher->id }}" data-value="{{ $voucher->value }}"
                                             @selected(old('voucher_id', $visit->voucher_id) == $voucher->id)>
-                                            {{ $voucher->kode }} - {{ $voucher->nama }} ({{ number_format($voucher->value) }}%)
+                                            {{ $voucher->kode }} - {{ $voucher->nama }} ({{
+                                            number_format($voucher->value) }}%)
                                         </option>
                                         @endforeach
                                     </select>
@@ -256,8 +279,8 @@
                                         id="metodebyr_id" name="metodebyr_id">
                                         <option value="">Pilih Metode</option>
                                         @foreach($metodePembayarans as $metode)
-                                        <option value="{{ $metode->id }}"
-                                            @selected(old('metodebyr_id', $visit->metodebyr_id) == $metode->id)>
+                                        <option value="{{ $metode->id }}" @selected(old('metodebyr_id', $visit->
+                                            metodebyr_id) == $metode->id)>
                                             {{ $metode->nama }}
                                         </option>
                                         @endforeach
@@ -280,13 +303,17 @@
                                             <div class="d-flex justify-content-between mb-2">
                                                 <strong>Diskon Voucher:</strong>
                                                 <span>
-                                                    <span id="totalDiskon">{{ $visit->voucher ? $visit->voucher->value.'%' : '0%' }}</span>
-                                                    (<span id="totalDiskonRp">Rp {{($visit->total_tagihan * ($visit->voucher ? $visit->voucher->value/100 : 0)) }}</span>)
+                                                    <span id="totalDiskon">{{ $visit->voucher ?
+                                                        $visit->voucher->value.'%' : '0%' }}</span>
+                                                    (<span id="totalDiskonRp">Rp {{($visit->total_tagihan *
+                                                        ($visit->voucher ? $visit->voucher->value/100 : 0)) }}</span>)
                                                 </span>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
                                                 <strong>Total Bayar:</strong>
-                                                <span id="totalBayar" class="fw-bold">Rp {{($visit->total_tagihan - ($visit->total_tagihan * ($visit->voucher ? $visit->voucher->value/100 : 0))) }}</span>
+                                                <span id="totalBayar" class="fw-bold">Rp {{($visit->total_tagihan -
+                                                    ($visit->total_tagihan * ($visit->voucher ?
+                                                    $visit->voucher->value/100 : 0))) }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -328,7 +355,8 @@
             <small class="text-muted test-grup"></small>
         </td>
         <td class="align-middle">
-            <input type="number" class="form-control form-control-sm test-jumlah" name="tests[][jumlah]" min="1" max="10" value="1">
+            <input type="number" class="form-control form-control-sm test-jumlah" name="tests[][jumlah]" min="1"
+                max="10" value="1">
         </td>
         <td class="test-harga align-middle"></td>
         <td class="test-subtotal align-middle"></td>
@@ -345,7 +373,8 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+    rel="stylesheet" />
 
 <script>
     $(document).ready(function() {

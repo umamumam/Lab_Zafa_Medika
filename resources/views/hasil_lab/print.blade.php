@@ -170,10 +170,19 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($visit->visitTests as $vt)
+            @php
+            $groupedTests = $visit->visitTests->groupBy('test.grup_test');
+            @endphp
+            @foreach($groupedTests as $grupTest => $visitTests)
+            <tr>
+                <td colspan="5" style="text-align: left; font-weight: bold; background-color: #f0f0f0;">
+                    {{ strtoupper($grupTest) }}
+                </td>
+            </tr>
+            @foreach($visitTests as $vt)
             @foreach($vt->hasilLabs->whereNull('detail_test_id') as $hasil)
             <tr>
-                <td style="text-align: left;"><strong>{{ $vt->test->nama }}</strong></td>
+                <td style="text-align: left;">&nbsp; &nbsp;{{ $vt->test->nama }}</td>
                 <td>{{ $hasil->flag }}</td>
                 <td>{{ $hasil->hasil }}</td>
                 <td>{{ $vt->test->nilai_normal }}</td>
@@ -188,7 +197,7 @@
             @endphp
             @if($hasilDetail)
             <tr>
-                <td style="padding-left: 20px; text-align: left;">{{ $dt->nama }}</td>
+                <td style="padding-left: 20px; text-align: left;">&nbsp; &nbsp;{{ $dt->nama }}</td>
                 <td>{{ $hasilDetail->flag }}</td>
                 <td>{{ $hasilDetail->hasil }}</td>
                 <td>{{ $dt->nilai_normal }}</td>
@@ -196,6 +205,7 @@
                 {{-- <td>{{ $vt->test->metode }}</td> --}}
             </tr>
             @endif
+            @endforeach
             @endforeach
             @endforeach
         </tbody>

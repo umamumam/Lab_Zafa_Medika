@@ -46,8 +46,9 @@ class VisitController extends Controller
         $pakets = Paket::where('status', 'Aktif')->get();
 
         // Generate preview nomor order
-        $today = now()->format('Ymd');
-        $prefix = 'PK' . $today;
+        $now = now();
+        $today = $now->format('d/m/Y H:i');
+        $prefix = 'PK' . now()->format('Ymd');
         $lastOrder = Visit::where('no_order', 'like', $prefix . '%')
             ->orderBy('no_order', 'desc')
             ->first();
@@ -64,7 +65,8 @@ class VisitController extends Controller
             'vouchers',
             'metodePembayarans',
             'no_order',
-            'pakets'
+            'pakets',
+            'today'
         ));
     }
     public function store(Request $request)
@@ -83,6 +85,7 @@ class VisitController extends Controller
             'tests' => 'nullable|array',
             'tests.*.test_id' => 'required_with:tests|exists:tests,id',
             'tests.*.jumlah' => 'required_with:tests|integer|min:1',
+            'tgl_order' => 'nullable|date_format:d/m/Y H:i',
         ]);
         if (!$request->filled('paket_id') && (!isset($request->tests) || empty($request->tests))) {
             return back()->withErrors(['general' => 'Pilih setidaknya satu paket atau satu tes.'])->withInput();
@@ -91,9 +94,15 @@ class VisitController extends Controller
         DB::beginTransaction();
 
         try {
-            $today = Carbon::now();
-            $prefix = 'PK' . $today->format('Ymd');
-            $lastOrder = Visit::where('no_order', 'like', $prefix . '%')->latest()->first();
+            if ($request->filled('tgl_order')) {
+                $tglOrder = Carbon::createFromFormat('d/m/Y H:i', $request->tgl_order);
+            } else {
+                $tglOrder = Carbon::now();
+            }
+            $prefix = 'PK' . $tglOrder->format('Ymd');
+            $lastOrder = Visit::where('no_order', 'like', $prefix . '%')
+                ->whereDate('tgl_order', $tglOrder->toDateString())
+                ->latest()->first();
 
             $number = 1;
             if ($lastOrder) {
@@ -106,7 +115,7 @@ class VisitController extends Controller
             // Buat entri Visit
             $visit = Visit::create([
                 'no_order' => $no_order,
-                'tgl_order' => $today,
+                'tgl_order' => $tglOrder,
                 'user_id' => auth()->id(),
                 'pasien_id' => $request->pasien_id,
                 'jenis_pasien' => $request->jenis_pasien,
@@ -157,9 +166,9 @@ class VisitController extends Controller
             }
             $visit->calculateTotal();
             if ($request->jenis_pasien === 'BPJS') {
-                        $visit->dibayar = 0;
-                        $visit->status_pembayaran = 'Lunas';
-                        $visit->save();
+                $visit->dibayar = 0;
+                $visit->status_pembayaran = 'Lunas';
+                $visit->save();
             }
             DB::commit();
             return redirect()->route('visits.show', $visit->id)
@@ -234,6 +243,7 @@ class VisitController extends Controller
             'tests.*.test_id' => 'required_with:tests|exists:tests,id',
             'tests.*.jumlah' => 'required_with:tests|integer|min:1',
             'tests.*.id' => 'nullable|exists:visit_tests,id', // Validasi untuk id VisitTest yang sudah ada
+            'tgl_order' => 'nullable|date_format:d/m/Y H:i',
         ]);
 
         if (!$request->filled('paket_id') && (!isset($request->tests) || empty($request->tests))) {
@@ -244,7 +254,10 @@ class VisitController extends Controller
         try {
             // Temukan visit yang akan diupdate
             $visit = Visit::with(['visitTests'])->findOrFail($id);
-
+            $tglOrder = $request->tgl_order;
+            if ($tglOrder) {
+                $tglOrder = Carbon::createFromFormat('d/m/Y H:i', $tglOrder);
+            }
             // Update data utama visit
             $visit->fill($request->only([
                 'pasien_id',
@@ -255,8 +268,10 @@ class VisitController extends Controller
                 'jenis_order',
                 'voucher_id',
                 'metodebyr_id',
-                'paket_id'
+                'paket_id',
+                'tgl_order'
             ]));
+            $visit->tgl_order = $tglOrder;
             $visit->save();
 
             if ($request->filled('paket_id')) {
