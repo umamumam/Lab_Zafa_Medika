@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Visit;
 use App\Models\Pasien;
 use App\Models\HasilLab;
@@ -154,13 +155,20 @@ class HasilLabController extends Controller
             if (!$hasilBelumValid) {
                 return back()->with('info', 'Semua hasil sudah divalidasi sebelumnya.');
             }
-            HasilLab::whereHas('visitTest', function ($q) use ($visitId) {
+            $visitDate = Carbon::parse($visit->tgl_order)->toDateString();
+            $currentTime = Carbon::now()->toTimeString();
+            $timestampToUse = $visitDate . ' ' . $currentTime;
+            $hasilLabs = HasilLab::whereHas('visitTest', function ($q) use ($visitId) {
                 $q->where('visit_id', $visitId);
-            })->where('status', 'Belum Valid')->update([
-                'status' => 'Valid',
-                'validator_id' => auth()->id(),
-                'validated_at' => now(),
-            ]);
+            })->where('status', 'Belum Valid')->get();
+
+            foreach ($hasilLabs as $hasilLab) {
+                $hasilLab->status = 'Valid';
+                $hasilLab->validator_id = auth()->id();
+                $hasilLab->validated_at = $timestampToUse;
+                $hasilLab->timestamps = false;
+                $hasilLab->save();
+            }
             $visit->update(['status_order' => 'Selesai']);
             DB::commit();
             return redirect()->route('visits.show', $visitId)
@@ -204,13 +212,20 @@ class HasilLabController extends Controller
             if (!$hasilBelumValid) {
                 return back()->with('info', 'Semua hasil sudah divalidasi sebelumnya.');
             }
-            HasilLab::whereHas('visitTest', function ($q) use ($visitId) {
+            $visitDate = Carbon::parse($visit->tgl_order)->toDateString();
+            $currentTime = Carbon::now()->toTimeString();
+            $timestampToUse = $visitDate . ' ' . $currentTime;
+            $hasilLabs = HasilLab::whereHas('visitTest', function ($q) use ($visitId) {
                 $q->where('visit_id', $visitId);
-            })->where('status', 'Belum Valid')->update([
-                'status' => 'Valid',
-                'validator_id' => auth()->id(),
-                'validated_at' => now(),
-            ]);
+            })->where('status', 'Belum Valid')->get();
+
+            foreach ($hasilLabs as $hasilLab) {
+                $hasilLab->status = 'Valid';
+                $hasilLab->validator_id = auth()->id();
+                $hasilLab->validated_at = $timestampToUse;
+                $hasilLab->timestamps = false;
+                $hasilLab->save();
+            }
             $visit->update(['status_order' => 'Selesai']);
             DB::commit();
             return redirect()->route('visits.validasi', $visitId)
