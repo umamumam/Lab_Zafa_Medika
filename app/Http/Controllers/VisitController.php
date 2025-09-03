@@ -359,26 +359,42 @@ class VisitController extends Controller
             return back()->with('error', 'Gagal mencatat pembayaran: ' . $e->getMessage());
         }
     }
-    public function updateStatus(Request $request, $id)
+public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'status_order' => 'required|in:Sampling,Proses,Selesai',
         ]);
+
         DB::beginTransaction();
+
         try {
             $visit = Visit::with([
                 'visitTests.test.detailTests' => function ($query) {
                     $query->where('status', 'Aktif')->orderBy('urutan');
                 }
             ])->findOrFail($id);
+
             $originalStatus = $visit->status_order;
             $visit->update(['status_order' => $request->status_order]);
+
+            // Cek apakah status diubah dari 'Sampling' atau 'Selesai' menjadi 'Proses'
             if ($originalStatus !== 'Proses' && $request->status_order === 'Proses') {
+
+                // Ambil tanggal dari tgl_order di tabel visits
+                $visitDate = Carbon::parse($visit->tgl_order)->toDateString();
+                // Ambil waktu (jam, menit, detik) saat ini
+                $currentTime = Carbon::now()->toTimeString();
+                // Gabungkan tanggal order dengan waktu saat ini
+                $timestampToUse = $visitDate . ' ' . $currentTime;
+
                 foreach ($visit->visitTests as $visitTest) {
                     $test = $visitTest->test;
+
+                    // Hapus data hasil lab yang belum valid sebelum membuat yang baru
                     HasilLab::where('visit_test_id', $visitTest->id)
                         ->where('status', 'Belum Valid')
                         ->delete();
+
                     if ($test->detailTests->isNotEmpty()) {
                         foreach ($test->detailTests as $detailTest) {
                             HasilLab::create([
@@ -386,19 +402,29 @@ class VisitController extends Controller
                                 'test_id' => $test->id,
                                 'detail_test_id' => $detailTest->id,
                                 'status' => 'Belum Valid',
+                                // Menetapkan created_at dan updated_at secara manual
+                                'created_at' => $timestampToUse,
+                                'updated_at' => $timestampToUse,
                             ]);
                         }
+                    } else {
+                        // Jika tidak ada detail test, buat satu entri hasil lab saja
+                        HasilLab::create([
+                            'visit_test_id' => $visitTest->id,
+                            'test_id' => $test->id,
+                            'detail_test_id' => null,
+                            'status' => 'Belum Valid',
+                            // Menetapkan created_at dan updated_at secara manual
+                            'created_at' => $timestampToUse,
+                            'updated_at' => $timestampToUse,
+                        ]);
                     }
-                    HasilLab::create([
-                        'visit_test_id' => $visitTest->id,
-                        'test_id' => $test->id,
-                        'detail_test_id' => null,
-                        'status' => 'Belum Valid',
-                    ]);
                 }
             }
+
             DB::commit();
             return back()->with('success', 'Status order berhasil diperbarui');
+
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal memperbarui status: ' . $e->getMessage());

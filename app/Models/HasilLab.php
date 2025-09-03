@@ -20,7 +20,9 @@ class HasilLab extends Model
         'validator_id',
         'validated_at',
         'kesan',
-        'catatan'
+        'catatan',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
