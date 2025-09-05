@@ -239,24 +239,32 @@
         <tr>
             <td></td>
             <td><strong>Total Tagihan</strong></td>
-            <td class="text-right"><strong>Rp. {{ number_format($total, 0, ',', '.') }},-</strong></td>
+            <td class="text-right">
+                <strong>
+                    @if(strtoupper($visit->jenis_pasien) == 'BPJS')
+                    Rp. 0,-
+                    @else
+                    Rp. {{ number_format($total, 0, ',', '.') }},-
+                    @endif
+                </strong>
+            </td>
         </tr>
     </table>
 
     @php
-        $keterangan = [];
+    $keterangan = [];
     @endphp
 
     @if($visit->jenis_pasien == 'BPJS')
-        @php
-            $keterangan[] = 'Pasien BPJS';
-        @endphp
+    @php
+    $keterangan[] = 'Pasien BPJS';
+    @endphp
     @endif
 
     @if($visit->paket_id)
-        @php
-            $keterangan[] = 'Paket Pemeriksaan';
-        @endphp
+    @php
+    $keterangan[] = 'Paket Pemeriksaan';
+    @endphp
     @endif
 
     @if(count($keterangan) > 0)
@@ -267,7 +275,12 @@
     @endif
     <!-- Terbilang -->
     <div class="terbilang">
-        <strong>Terbilang :</strong> {{ ucwords(Terbilang::make($total)) }} Rupiah
+        <strong>Terbilang :</strong>
+        @if(strtoupper($visit->jenis_pasien) == 'BPJS')
+            Nol Rupiah
+        @else
+            {{ ucwords(Terbilang::make($total)) }} Rupiah
+        @endif
     </div>
 
     <!-- Pembayaran -->
@@ -276,11 +289,7 @@
             <td width="70%"></td>
             <td width="15%">Pembayaran</td>
             <td width="15%" class="text-right">
-                @if(strtoupper($visit->jenis_pasien) == 'BPJS')
-                    Rp. {{ number_format($total, 0, ',', '.') }},-
-                @else
-                    Rp. {{ number_format($visit->dibayar, 0, ',', '.') }},-
-                @endif
+                Rp. {{ number_format($visit->dibayar, 0, ',', '.') }},-
             </td>
         </tr>
         <tr>
