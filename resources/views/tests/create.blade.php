@@ -92,24 +92,17 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="grup_test" class="form-label">Grup Test</label>
-                                <select class="form-select @error('grup_test') is-invalid @enderror" id="grup_test"
-                                    name="grup_test" required>
+                                <label for="grup_test_id" class="form-label">Grup Test</label>
+                                <select class="form-select @error('grup_test_id') is-invalid @enderror" id="grup_test_id"
+                                    name="grup_test_id" required>
                                     <option value="">Pilih Grup Test</option>
-                                    <option value="Hematologi" {{ old('grup_test')=='Hematologi' ? 'selected' : '' }}>
-                                        Hematologi</option>
-                                    <option value="Kimia Klinik" {{ old('grup_test')=='Kimia Klinik' ? 'selected' : ''
-                                        }}>Kimia Klinik</option>
-                                    <option value="Imunologi / Serologi" {{ old('grup_test')=='Imunologi / Serologi'
-                                        ? 'selected' : '' }}>Imunologi / Serologi</option>
-                                    <option value="Mikrobiologi" {{ old('grup_test')=='Mikrobiologi' ? 'selected' : ''
-                                        }}>Mikrobiologi</option>
-                                    <option value="Khusus" {{ old('grup_test')=='Khusus' ? 'selected' : '' }}>Khusus
-                                    </option>
-                                    <option value="Lainnya" {{ old('grup_test')=='Lainnya' ? 'selected' : '' }}>Lainnya
-                                    </option>
+                                    @foreach ($grupTests as $grupTest)
+                                        <option value="{{ $grupTest->id }}" {{ old('grup_test_id') == $grupTest->id ? 'selected' : '' }}>
+                                            {{ $grupTest->nama }}
+                                        </option>
+                                    @endforeach
                                 </select>
-                                @error('grup_test')
+                                @error('grup_test_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -119,34 +112,18 @@
                                 <select class="form-select @error('sub_grup') is-invalid @enderror" id="sub_grup"
                                     name="sub_grup" required>
                                     <option value="">Pilih Sub Grup</option>
-                                    <option value="Cairan dan Parasitologi (E1)" {{
-                                        old('sub_grup')=='Cairan dan Parasitologi (E1)' ? 'selected' : '' }}>Cairan dan
-                                        Parasitologi (E1)</option>
-                                    <option value="Elektrometri (D1)" {{ old('sub_grup')=='Elektrometri (D1)'
-                                        ? 'selected' : '' }}>Elektrometri (D1)</option>
-                                    <option value="Endokrin Metabolik (B1)" {{
-                                        old('sub_grup')=='Endokrin Metabolik (B1)' ? 'selected' : '' }}>Endokrin
-                                        Metabolik (B1)</option>
-                                    <option value="Faal Ginjal (B3)" {{ old('sub_grup')=='Faal Ginjal (B3)' ? 'selected'
-                                        : '' }}>Faal Ginjal (B3)</option>
-                                    <option value="Faal Hati (B2)" {{ old('sub_grup')=='Faal Hati (B2)' ? 'selected'
-                                        : '' }}>Faal Hati (B2)</option>
-                                    <option value="Faal Hemotsasis (A2)" {{ old('sub_grup')=='Faal Hemotsasis (A2)'
-                                        ? 'selected' : '' }}>Faal Hemotsasis (A2)</option>
-                                    <option value="Faal Tiroid (B5)" {{ old('sub_grup')=='Faal Tiroid (B5)' ? 'selected'
-                                        : '' }}>Faal Tiroid (B5)</option>
-                                    <option value="Hematologi (A1)" {{ old('sub_grup')=='Hematologi (A1)' ? 'selected'
-                                        : '' }}>Hematologi (A1)</option>
-                                    <option value="Imunologi / Serologi (B4)" {{
-                                        old('sub_grup')=='Imunologi / Serologi (B4)' ? 'selected' : '' }}>Imunologi /
-                                        Serologi (B4)</option>
-                                    <option value="Marker Infeksi / Inflamasi (C1)" {{
-                                        old('sub_grup')=='Marker Infeksi / Inflamasi (C1)' ? 'selected' : '' }}>Marker
-                                        Infeksi / Inflamasi (C1)</option>
-                                    <option value="Marker Jantung (C2)" {{ old('sub_grup')=='Marker Jantung (C2)'
-                                        ? 'selected' : '' }}>Marker Jantung (C2)</option>
-                                    <option value="Lain - Lain (D2)" {{ old('sub_grup')=='Lain - Lain (D2)' ? 'selected'
-                                        : '' }}>Lain - Lain (D2)</option>
+                                    <option value="Cairan dan Parasitologi (E1)" {{ old('sub_grup')=='Cairan dan Parasitologi (E1)' ? 'selected' : '' }}>Cairan dan Parasitologi (E1)</option>
+                                    <option value="Elektrometri (D1)" {{ old('sub_grup')=='Elektrometri (D1)' ? 'selected' : '' }}>Elektrometri (D1)</option>
+                                    <option value="Endokrin Metabolik (B1)" {{ old('sub_grup')=='Endokrin Metabolik (B1)' ? 'selected' : '' }}>Endokrin Metabolik (B1)</option>
+                                    <option value="Faal Ginjal (B3)" {{ old('sub_grup')=='Faal Ginjal (B3)' ? 'selected' : '' }}>Faal Ginjal (B3)</option>
+                                    <option value="Faal Hati (B2)" {{ old('sub_grup')=='Faal Hati (B2)' ? 'selected' : '' }}>Faal Hati (B2)</option>
+                                    <option value="Faal Hemotsasis (A2)" {{ old('sub_grup')=='Faal Hemotsasis (A2)' ? 'selected' : '' }}>Faal Hemotsasis (A2)</option>
+                                    <option value="Faal Tiroid (B5)" {{ old('sub_grup')=='Faal Tiroid (B5)' ? 'selected' : '' }}>Faal Tiroid (B5)</option>
+                                    <option value="Hematologi (A1)" {{ old('sub_grup')=='Hematologi (A1)' ? 'selected' : '' }}>Hematologi (A1)</option>
+                                    <option value="Imunologi / Serologi (B4)" {{ old('sub_grup')=='Imunologi / Serologi (B4)' ? 'selected' : '' }}>Imunologi / Serologi (B4)</option>
+                                    <option value="Marker Infeksi / Inflamasi (C1)" {{ old('sub_grup')=='Marker Infeksi / Inflamasi (C1)' ? 'selected' : '' }}>Marker Infeksi / Inflamasi (C1)</option>
+                                    <option value="Marker Jantung (C2)" {{ old('sub_grup')=='Marker Jantung (C2)' ? 'selected' : '' }}>Marker Jantung (C2)</option>
+                                    <option value="Lain - Lain (D2)" {{ old('sub_grup')=='Lain - Lain (D2)' ? 'selected' : '' }}>Lain - Lain (D2)</option>
                                 </select>
                                 @error('sub_grup')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -160,27 +137,17 @@
                                 <select class="form-select @error('jenis_sampel') is-invalid @enderror"
                                     id="jenis_sampel" name="jenis_sampel" required>
                                     <option value="">Pilih Jenis Sampel</option>
-                                    <option value="Whole Blood EDTA" {{ old('jenis_sampel')=='Whole Blood EDTA'
-                                        ? 'selected' : '' }}>Whole Blood EDTA</option>
-                                    <option value="Whole Blood Heparin" {{ old('jenis_sampel')=='Whole Blood Heparin'
-                                        ? 'selected' : '' }}>Whole Blood Heparin</option>
-                                    <option value="Serum" {{ old('jenis_sampel')=='Serum' ? 'selected' : '' }}>Serum
-                                    </option>
-                                    <option value="Plasma Citrat" {{ old('jenis_sampel')=='Plasma Citrat' ? 'selected'
-                                        : '' }}>Plasma Citrat</option>
-                                    <option value="Urin" {{ old('jenis_sampel')=='Urin' ? 'selected' : '' }}>Urin
-                                    </option>
-                                    <option value="Feaces" {{ old('jenis_sampel')=='Feaces' ? 'selected' : '' }}>Feaces
-                                    </option>
-                                    <option value="Sputum" {{ old('jenis_sampel')=='Sputum' ? 'selected' : '' }}>Sputum
-                                    </option>
-                                    <option value="Cairan" {{ old('jenis_sampel')=='Cairan' ? 'selected' : '' }}>Cairan
-                                    </option>
+                                    <option value="Whole Blood EDTA" {{ old('jenis_sampel')=='Whole Blood EDTA' ? 'selected' : '' }}>Whole Blood EDTA</option>
+                                    <option value="Whole Blood Heparin" {{ old('jenis_sampel')=='Whole Blood Heparin' ? 'selected' : '' }}>Whole Blood Heparin</option>
+                                    <option value="Serum" {{ old('jenis_sampel')=='Serum' ? 'selected' : '' }}>Serum</option>
+                                    <option value="Plasma Citrat" {{ old('jenis_sampel')=='Plasma Citrat' ? 'selected' : '' }}>Plasma Citrat</option>
+                                    <option value="Urin" {{ old('jenis_sampel')=='Urin' ? 'selected' : '' }}>Urin</option>
+                                    <option value="Feaces" {{ old('jenis_sampel')=='Feaces' ? 'selected' : '' }}>Feaces</option>
+                                    <option value="Sputum" {{ old('jenis_sampel')=='Sputum' ? 'selected' : '' }}>Sputum</option>
+                                    <option value="Cairan" {{ old('jenis_sampel')=='Cairan' ? 'selected' : '' }}>Cairan</option>
                                     <option value="LCS" {{ old('jenis_sampel')=='LCS' ? 'selected' : '' }}>LCS</option>
-                                    <option value="Preparat" {{ old('jenis_sampel')=='Preparat' ? 'selected' : '' }}>
-                                        Preparat</option>
-                                    <option value="Swab" {{ old('jenis_sampel')=='Swab' ? 'selected' : '' }}>Swab
-                                    </option>
+                                    <option value="Preparat" {{ old('jenis_sampel')=='Preparat' ? 'selected' : '' }}>Preparat</option>
+                                    <option value="Swab" {{ old('jenis_sampel')=='Swab' ? 'selected' : '' }}>Swab</option>
                                 </select>
                                 @error('jenis_sampel')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -191,10 +158,8 @@
                                 <label for="status" class="form-label">Status</label>
                                 <select class="form-select @error('status') is-invalid @enderror" id="status"
                                     name="status" required>
-                                    <option value="Aktif" {{ (old('status')=='Aktif' || old('status')==null)
-                                        ? 'selected' : '' }}>Aktif</option>
-                                    <option value="Tidak Aktif" {{ old('status')=='Tidak Aktif' ? 'selected' : '' }}>
-                                        Tidak Aktif</option>
+                                    <option value="Aktif" {{ (old('status')=='Aktif' || old('status')==null) ? 'selected' : '' }}>Aktif</option>
+                                    <option value="Tidak Aktif" {{ old('status')=='Tidak Aktif' ? 'selected' : '' }}>Tidak Aktif</option>
                                 </select>
                                 @error('status')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -224,21 +189,16 @@
                                 <p class="mb-3">Anda bisa menambahkan satu atau beberapa nilai normal berdasarkan jenis
                                     kelamin dan rentang usia.</p>
                                 <div id="nilai-normal-container">
+                                    {{-- Kontainer untuk nilai normal --}}
                                     <div class="nilai-normal-item mb-3 p-3 border rounded bg-light">
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-2">
                                                 <label class="form-label">Jenis Kelamin</label>
                                                 <select class="form-select" name="nilai_normals_data[0][jenis_kelamin]"
                                                     required>
-                                                    <option value="Umum" {{
-                                                        old('nilai_normals_data.0.jenis_kelamin')=='Umum' ? 'selected'
-                                                        : '' }}>Umum</option>
-                                                    <option value="Laki - Laki" {{
-                                                        old('nilai_normals_data.0.jenis_kelamin')=='Laki - Laki'
-                                                        ? 'selected' : '' }}>Laki - Laki</option>
-                                                    <option value="Perempuan" {{
-                                                        old('nilai_normals_data.0.jenis_kelamin')=='Perempuan'
-                                                        ? 'selected' : '' }}>Perempuan</option>
+                                                    <option value="Umum" {{ old('nilai_normals_data.0.jenis_kelamin')=='Umum' ? 'selected' : '' }}>Umum</option>
+                                                    <option value="Laki - Laki" {{ old('nilai_normals_data.0.jenis_kelamin')=='Laki - Laki' ? 'selected' : '' }}>Laki - Laki</option>
+                                                    <option value="Perempuan" {{ old('nilai_normals_data.0.jenis_kelamin')=='Perempuan' ? 'selected' : '' }}>Perempuan</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
@@ -257,10 +217,8 @@
                                                 <label class="form-label">Tipe Nilai</label>
                                                 <select class="form-select nilai-type"
                                                     name="nilai_normals_data[0][type]" required>
-                                                    <option value="Single" {{ old('nilai_normals_data.0.type')=='Single'
-                                                        ? 'selected' : '' }}>Single</option>
-                                                    <option value="Range" {{ old('nilai_normals_data.0.type')=='Range'
-                                                        ? 'selected' : '' }}>Range</option>
+                                                    <option value="Single" {{ old('nilai_normals_data.0.type')=='Single' ? 'selected' : '' }}>Single</option>
+                                                    <option value="Range" {{ old('nilai_normals_data.0.type')=='Range' ? 'selected' : '' }}>Range</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-3 range-field"
@@ -287,6 +245,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {{-- End Kontainer --}}
                                 </div>
                             </div>
                         </div>
@@ -310,26 +269,71 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Menambahkan nilai normal baru
-        let nilaiNormalIndex = 1;
+        let nilaiNormalIndex = {{ count(old('nilai_normals_data', [])) > 0 ? count(old('nilai_normals_data', [])) : 1 }};
         const container = document.getElementById('nilai-normal-container');
         const addButton = document.getElementById('add-nilai-normal');
 
         // Fungsi untuk menambahkan event listener pada type select
         function setupTypeChangeListener(item) {
             const typeSelect = item.querySelector('.nilai-type');
-            typeSelect.addEventListener('change', function() {
-                const rangeFields = item.querySelectorAll('.range-field');
-                if (this.value === 'Range') {
-                    rangeFields.forEach(field => field.style.display = 'block');
-                } else {
-                    rangeFields.forEach(field => field.style.display = 'none');
-                }
-            });
+            if (typeSelect) {
+                typeSelect.addEventListener('change', function() {
+                    const rangeFields = item.querySelectorAll('.range-field');
+                    if (this.value === 'Range') {
+                        rangeFields.forEach(field => field.style.display = 'block');
+                        rangeFields.forEach(field => field.querySelector('input').setAttribute('required', 'required'));
+                    } else {
+                        rangeFields.forEach(field => field.style.display = 'none');
+                        rangeFields.forEach(field => field.querySelector('input').removeAttribute('required'));
+                    }
+                });
+            }
         }
 
         // Setup untuk item pertama
         const firstItem = document.querySelector('.nilai-normal-item');
         setupTypeChangeListener(firstItem);
+
+        // Jika ada old input, ulangi untuk setiap item
+        const oldValues = {!! json_encode(old('nilai_normals_data', [])) !!};
+        if (oldValues.length > 0) {
+            // Hapus item placeholder pertama
+            if (firstItem) {
+                firstItem.remove();
+            }
+
+            oldValues.forEach((data, index) => {
+                const template = document.querySelector('.nilai-normal-item') ? document.querySelector('.nilai-normal-item').cloneNode(true) : null;
+                if (!template) return;
+
+                const newIndex = index;
+                template.querySelectorAll('[name]').forEach(input => {
+                    const name = input.getAttribute('name');
+                    input.setAttribute('name', name.replace(`[${0}]`, `[${newIndex}]`));
+
+                    const fieldName = name.match(/\[(\w+)\]$/)[1];
+                    if (data[fieldName] !== undefined) {
+                        if (input.tagName === 'SELECT') {
+                            input.value = data[fieldName];
+                        } else {
+                            input.value = data[fieldName];
+                        }
+                    }
+                });
+
+                // Set display for range fields based on old value
+                const typeSelect = template.querySelector('.nilai-type');
+                const rangeFields = template.querySelectorAll('.range-field');
+                if (typeSelect && typeSelect.value === 'Range') {
+                    rangeFields.forEach(field => field.style.display = 'block');
+                } else {
+                    rangeFields.forEach(field => field.style.display = 'none');
+                }
+
+                setupTypeChangeListener(template);
+                container.appendChild(template);
+            });
+        }
 
         // Menambahkan item baru
         addButton.addEventListener('click', function() {
