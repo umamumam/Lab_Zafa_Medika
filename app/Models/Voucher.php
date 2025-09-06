@@ -12,6 +12,7 @@ class Voucher extends Model
     protected $fillable = [
         'kode',
         'nama',
+        'tipe',
         'value',
         'status',
         'keterangan'
@@ -27,6 +28,13 @@ class Voucher extends Model
     }
     public function calculateDiscount($amount)
     {
-        return $amount * $this->value / 100;
+        if ($this->tipe === 'persen') {
+            $discount = $amount * ($this->value / 100);
+        } elseif ($this->tipe === 'nominal') {
+            $discount = $this->value;
+        } else {
+            $discount = 0;
+        }
+        return min($discount, $amount);
     }
 }

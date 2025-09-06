@@ -35,7 +35,13 @@
                             <td>{{ $no++ }}</td>
                             <td>{{ $voucher->kode }}</td>
                             <td>{{ $voucher->nama }}</td>
+                            @if ($voucher->tipe === 'persen')
                             <td>{{ $voucher->value }}%</td>
+                            @elseif ($voucher->tipe === 'nominal')
+                            <td>Rp {{ number_format($voucher->value, 0, ',', '.') }}</td>
+                            @else
+                            <td>{{ $voucher->value }}</td>
+                            @endif
                             <td>
                                 <span class="badge badge-{{ $voucher->status == 'Aktif' ? 'success' : 'danger' }}">
                                     {{ $voucher->status }}

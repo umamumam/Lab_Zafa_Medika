@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('kode')->unique();
             $table->string('nama');
+            $table->enum('tipe', ['persen', 'nominal']);
             $table->integer('value');
             $table->enum('status', ['Aktif', 'Tidak Aktif'])->default('Aktif');
             $table->text('keterangan')->nullable();

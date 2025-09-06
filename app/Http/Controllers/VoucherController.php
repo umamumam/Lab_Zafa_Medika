@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class VoucherController extends Controller
 {
@@ -20,13 +21,7 @@ class VoucherController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'kode' => 'required|unique:vouchers|max:5',
-            'nama' => 'required|max:100',
-            'value' => 'required|numeric|between:0,100',
-            'status' => 'required|in:Aktif,Tidak Aktif',
-            'keterangan' => 'nullable|string'
-        ]);
+        $validated = $request->validate($this->getValidationRules());
 
         Voucher::create($validated);
 
@@ -40,13 +35,7 @@ class VoucherController extends Controller
 
     public function update(Request $request, Voucher $voucher)
     {
-        $validated = $request->validate([
-            'kode' => 'required|max:5|unique:vouchers,kode,'.$voucher->id,
-            'nama' => 'required|max:100',
-            'value' => 'required|numeric|between:0,100',
-            'status' => 'required|in:Aktif,Tidak Aktif',
-            'keterangan' => 'nullable|string'
-        ]);
+        $validated = $request->validate($this->getValidationRules($voucher->id));
 
         $voucher->update($validated);
 
@@ -57,5 +46,23 @@ class VoucherController extends Controller
     {
         $voucher->delete();
         return redirect()->route('vouchers.index')->with('success', 'Voucher berhasil dihapus.');
+    }
+
+    protected function getValidationRules(?int $id = null)
+    {
+        return [
+            'kode' => ['required', 'string', 'max:5', Rule::unique('vouchers')->ignore($id)],
+            'nama' => 'required|string|max:100',
+            'tipe' => 'required|in:persen,nominal',
+            'value' => [
+                'required',
+                'numeric',
+                'min:0',
+                Rule::when(request('tipe') === 'persen', ['between:0,100']),
+                Rule::when(request('tipe') === 'nominal', ['min:1']),
+            ],
+            'status' => 'required|in:Aktif,Tidak Aktif',
+            'keterangan' => 'nullable|string'
+        ];
     }
 }

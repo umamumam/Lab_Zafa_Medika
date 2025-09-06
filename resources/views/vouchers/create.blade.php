@@ -7,6 +7,15 @@
             <h4>Tambah Voucher</h4>
         </div>
         <div class="card-body">
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <form action="{{ route('vouchers.store') }}" method="POST">
                 @csrf
                 <div class="row">
@@ -14,7 +23,7 @@
                         <div class="form-group">
                             <label for="kode">Kode Voucher</label>
                             <input type="text" class="form-control @error('kode') is-invalid @enderror" id="kode" name="kode"
-                                   value="{{ old('kode') }}" maxlength="5" required>
+                                value="{{ old('kode') }}" maxlength="5" required>
                             @error('kode')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -26,7 +35,7 @@
                         <div class="form-group">
                             <label for="nama">Nama Voucher</label>
                             <input type="text" class="form-control @error('nama') is-invalid @enderror" id="nama" name="nama"
-                                   value="{{ old('nama') }}" required>
+                                value="{{ old('nama') }}" required>
                             @error('nama')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -39,10 +48,12 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="value">Nilai Voucher (%)</label>
-                            <input type="number" step="0.01" class="form-control @error('value') is-invalid @enderror"
-                                   id="value" name="value" value="{{ old('value') }}" min="0" max="100" required>
-                            @error('value')
+                            <label for="tipe">Tipe Diskon</label>
+                            <select class="form-control @error('tipe') is-invalid @enderror" id="tipe" name="tipe" required>
+                                <option value="persen" {{ old('tipe') == 'persen' ? 'selected' : '' }}>Persentase (%)</option>
+                                <option value="nominal" {{ old('tipe') == 'nominal' ? 'selected' : '' }}>Nominal (Rp)</option>
+                            </select>
+                            @error('tipe')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>
@@ -51,12 +62,10 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="status">Status</label>
-                            <select class="form-control @error('status') is-invalid @enderror" id="status" name="status" required>
-                                <option value="Aktif" {{ old('status') == 'Aktif' ? 'selected' : '' }}>Aktif</option>
-                                <option value="Tidak Aktif" {{ old('status') == 'Tidak Aktif' ? 'selected' : '' }}>Tidak Aktif</option>
-                            </select>
-                            @error('status')
+                            <label id="value-label" for="value">Nilai Voucher (%)</label>
+                            <input type="number" step="1" class="form-control @error('value') is-invalid @enderror"
+                                id="value" name="value" value="{{ old('value') }}" min="0" required>
+                            @error('value')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>
@@ -66,9 +75,22 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="status">Status</label>
+                    <select class="form-control @error('status') is-invalid @enderror" id="status" name="status" required>
+                        <option value="Aktif" {{ old('status') == 'Aktif' ? 'selected' : '' }}>Aktif</option>
+                        <option value="Tidak Aktif" {{ old('status') == 'Tidak Aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                    </select>
+                    @error('status')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label for="keterangan">Keterangan</label>
                     <textarea class="form-control @error('keterangan') is-invalid @enderror" id="keterangan"
-                              name="keterangan" rows="3">{{ old('keterangan') }}</textarea>
+                                name="keterangan" rows="3">{{ old('keterangan') }}</textarea>
                     @error('keterangan')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -91,4 +113,32 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tipeSelect = document.getElementById('tipe');
+        const valueInput = document.getElementById('value');
+        const valueLabel = document.getElementById('value-label');
+
+        function updateValueField() {
+            const selectedTipe = tipeSelect.value;
+            if (selectedTipe === 'persen') {
+                valueLabel.innerText = 'Nilai Voucher (%)';
+                valueInput.min = 0;
+                valueInput.max = 100;
+                valueInput.step = 1;
+            } else if (selectedTipe === 'nominal') {
+                valueLabel.innerText = 'Nilai Voucher (Rp)';
+                valueInput.min = 1;
+                valueInput.removeAttribute('max');
+                valueInput.step = 1;
+            }
+        }
+
+        tipeSelect.addEventListener('change', updateValueField);
+
+        // Call on page load to set initial state
+        updateValueField();
+    });
+</script>
 @endsection
