@@ -12,6 +12,7 @@ use App\Http\Controllers\RuanganController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\HasilLabController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MetodebyrController;
 use App\Http\Controllers\DetailTestController;
 use App\Http\Controllers\JasmaniMcuController;
 use App\Http\Controllers\PenerimaanController;
@@ -37,6 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class);
 
     Route::resource('dokters', DokterController::class);
+    Route::resource('metodebyrs', MetodebyrController::class);
     Route::resource('ruangans', RuanganController::class);
     Route::resource('tests', TestController::class);
     Route::resource('detail_tests', DetailTestController::class);

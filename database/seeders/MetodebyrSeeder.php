@@ -14,12 +14,9 @@ class MetodebyrSeeder extends Seeder
     {
         $data = [
             ['nama' => 'Cash'],
-            ['nama' => 'QRIS'],
-            ['nama' => 'Transfer'],
-            ['nama' => 'MoU'],
-            ['nama' => 'BPJS Kerjasama'],
-            ['nama' => 'BPJS Prolanis / Lupis'],
-            ['nama' => 'Mandiri InHealth'],
+            ['nama' => 'BANK BRI'],
+            ['nama' => 'BANK BCA'],
+            ['nama' => 'BPJS'],
         ];
 
         foreach ($data as $item) {

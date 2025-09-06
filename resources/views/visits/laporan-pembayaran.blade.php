@@ -46,7 +46,7 @@
                             <td>Rp {{ number_format($visit->total_tagihan, 0, ',', '.') }}</td>
                             <td>Rp {{ number_format($visit->dibayar, 0, ',', '.') }}</td>
                             <td>Rp {{ number_format($visit->jenis_pasien == 'BPJS' ? 0 : ($visit->total_tagihan - $visit->dibayar), 0, ',', '.') }}</td>
-                            <td>{{ str_replace('BPJS Kerjasama', 'BPJS-K', $visit->penerimaan->metodeBayar->nama ?? '-') }}</td>
+                            <td>{{ str_replace('BPJS', 'BPJS-K', $visit->penerimaan->metodeBayar->nama ?? '-') }}</td>
                             <td>{{ \Carbon\Carbon::parse($visit->penerimaan->created_at)->format('d/m/Y') ?? '-' }}</td>
                             <td>{{ $visit->penerimaan->user->name ?? '-' }}</td>
                         </tr>

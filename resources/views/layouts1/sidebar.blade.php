@@ -314,6 +314,11 @@
                                     <span class="sub-item">Master Voucher</span>
                                 </a>
                             </li>
+                            <li>
+                                <a href="/metodebyrs">
+                                    <span class="sub-item">Metode Pembayaran</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>

@@ -46,7 +46,7 @@ class LaporanPembayaranExport implements FromCollection, WithHeadings, WithMappi
         if ($visit->jenis_pasien == 'BPJS' && ($visit->penerimaan->jumlah ?? 0) == 0) {
             $metodeBayar = 'BPJS-K';
         } else {
-            $metodeBayar = str_replace('BPJS Kerjasama', 'BPJS-K', $metodeBayar);
+            $metodeBayar = str_replace('BPJS', 'BPJS-K', $metodeBayar);
         }
 
         return [
