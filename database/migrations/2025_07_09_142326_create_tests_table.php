@@ -23,7 +23,8 @@ return new class extends Migration
             $table->string('satuan');
             $table->integer('harga_umum')->default(0);
             $table->integer('harga_bpjs')->default(0);
-            $table->enum('grup_test', ['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya']);
+            $table->foreignId('grup_test_id')->constrained('grup_tests')->onDelete('cascade');
+            // $table->enum('grup_test', ['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya']);
             $table->enum('sub_grup', ['Cairan dan Parasitologi (E1)', 'Elektrometri (D1)', 'Endokrin Metabolik (B1)', 'Faal Ginjal (B3)', 'Faal Hati (B2)', 'Faal Hemotsasis (A2)', 'Faal Tiroid (B5)', 'Hematologi (A1)', 'Imunologi / Serologi (B4)', 'Marker Infeksi / Inflamasi (C1)', 'Marker Jantung (C2)', 'Lain - Lain (D2)']);
             $table->enum('jenis_sampel', ['Whole Blood EDTA', 'Whole Blood Heparin', 'Serum', 'Plasma Citrat', 'Urin', 'Feaces', 'Sputum', 'Cairan', 'LCS', 'Preparat', 'Swab']);
             $table->string('interpretasi')->nullable();

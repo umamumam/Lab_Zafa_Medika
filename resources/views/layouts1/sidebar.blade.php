@@ -141,11 +141,11 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="/pemeriksaan/mikrobiologi">
-                                    <span class="sub-item">Mikrobiologi</span>
+                                <a href="/pemeriksaan/urinalisa">
+                                    <span class="sub-item">Urinalisa</span>
                                 </a>
                             </li>
-                            <li>
+                            {{-- <li>
                                 <a href="/pemeriksaan/khusus">
                                     <span class="sub-item">Khusus</span>
                                 </a>
@@ -154,7 +154,7 @@
                                 <a href="/pemeriksaan/lainnya">
                                     <span class="sub-item">Lainnya</span>
                                 </a>
-                            </li>
+                            </li> --}}
                             <li>
                                 <a href="/pemeriksaan/paket">
                                     <span class="sub-item">Paket & MCU</span>
@@ -317,6 +317,11 @@
                             <li>
                                 <a href="/metodebyrs">
                                     <span class="sub-item">Metode Pembayaran</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/grup_tests">
+                                    <span class="sub-item">Grup Pemeriksaan</span>
                                 </a>
                             </li>
                         </ul>

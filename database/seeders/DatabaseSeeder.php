@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             VoucherSeeder::class,
             MetodebyrSeeder::class,
+            GrupTestSeeder::class,
         ]);
         User::factory()->create([
             'name' => 'Test User',

@@ -46,7 +46,7 @@
                             <td>{{ $no++ }}</td>
                             <td>{{ $test->kode }}</td>
                             <td>{{ $test->nama }}</td>
-                            <td>{{ $test->grup_test }}</td>
+                            <td>{{ $test->grupTest->nama }}</td>
                             <td>{{ $test->sub_grup }}</td>
                             <td>{{ $details->count() }}</td>
                             <td style="text-align: center">

@@ -40,7 +40,7 @@ class VisitController extends Controller
         $pasiens = Pasien::all();
         $dokters = Dokter::where('status', 'Aktif')->get();
         $ruangans = Ruangan::all();
-        $tests = Test::where('status', 'Aktif')->get();
+        $tests = Test::where('status', 'Aktif')->with('grupTest')->get();
         $vouchers = Voucher::where('status', 'Aktif')->get();
         $metodePembayarans = Metodebyr::all();
         $pakets = Paket::where('status', 'Aktif')->get();
@@ -474,13 +474,13 @@ class VisitController extends Controller
     }
     public function imunologiSerologi()
     {
-        $visits = $this->filterPemeriksaanByGrup('Imunologi / Serologi');
+        $visits = $this->filterPemeriksaanByGrup('Imunologi - Serologi');
         return view('visits.imunologiserologi', compact('visits'));
     }
-    public function mikrobiologi()
+    public function Urinalisa()
     {
-        $visits = $this->filterPemeriksaanByGrup('Mikrobiologi');
-        return view('visits.mikrobiologi', compact('visits'));
+        $visits = $this->filterPemeriksaanByGrup('Urinalisa');
+        return view('visits.urinalisa', compact('visits'));
     }
     public function khusus()
     {
@@ -494,10 +494,10 @@ class VisitController extends Controller
     }
     private function filterPemeriksaanByGrup($grupTest)
     {
-        return Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test', 'paket'])
+        return Visit::with(['pasien', 'dokter', 'ruangan', 'visitTests.test.grupTest', 'paket'])
             ->where('status_order', 'Proses')
-            ->whereHas('visitTests.test', function ($q) use ($grupTest) {
-                $q->where('grup_test', $grupTest);
+            ->whereHas('visitTests.test.grupTest', function ($query) use ($grupTest) {
+                $query->where('nama', $grupTest);
             })
             ->orderBy('tgl_order', 'desc')
             ->get();
@@ -658,21 +658,22 @@ class VisitController extends Controller
     public function laporanTahunan(Request $request)
     {
         $tahun = $request->input('tahun', now()->year);
-        $tests = Test::with(['visitTests.visit'])
-            ->orderBy('grup_test')
-            ->orderBy('nama')
+        $tests = Test::with(['grupTest' => function ($query) {
+            $query->orderBy('nama', 'asc');
+        }])
             ->get()
-            ->groupBy('grup_test');
+            ->sortBy(function ($test) {
+                return $test->grupTest->nama;
+            })
+            ->groupBy('grupTest.nama');
+
         $laporan = [];
-        $currentGroup = null;
         foreach ($tests as $grup => $testGroup) {
-            if ($currentGroup !== $grup) {
-                $laporan[] = [
-                    'is_separator' => true,
-                    'grup' => $grup
-                ];
-                $currentGroup = $grup;
-            }
+            $laporan[] = [
+                'is_separator' => true,
+                'grup' => $grup
+            ];
+
             foreach ($testGroup as $test) {
                 $perBulan = [];
                 for ($bulan = 1; $bulan <= 12; $bulan++) {
@@ -779,22 +780,23 @@ class VisitController extends Controller
     public function exportLaporanTahunanExcel(Request $request)
     {
         $tahun = $request->input('tahun', now()->year);
-        $tests = Test::with(['visitTests.visit'])
-            ->orderBy('grup_test')
-            ->orderBy('nama')
+        $tests = Test::with(['grupTest' => function ($query) {
+            $query->orderBy('nama', 'asc');
+        }])
             ->get()
-            ->groupBy('grup_test');
+            ->sortBy(function ($test) {
+                return $test->grupTest->nama;
+            })
+            ->groupBy('grupTest.nama');
         $laporan = [];
-        $currentGroup = null;
         foreach ($tests as $grup => $testGroup) {
-            if ($currentGroup !== $grup) {
-                $laporan[] = [
-                    'is_separator' => true,
-                    'grup' => $grup
-                ];
-                $currentGroup = $grup;
-            }
-            foreach ($testGroup as $test) {
+            $laporan[] = [
+                'is_separator' => true,
+                'grup' => $grup
+            ];
+            $sortedTestGroup = $testGroup->sortBy('nama');
+
+            foreach ($sortedTestGroup as $test) {
                 $perBulan = [];
                 for ($bulan = 1; $bulan <= 12; $bulan++) {
                     $jumlah = VisitTest::where('test_id', $test->id)
@@ -805,6 +807,7 @@ class VisitController extends Controller
                         ->count();
                     $perBulan[$bulan] = $jumlah;
                 }
+
                 $laporan[] = [
                     'is_separator' => false,
                     'grup' => $grup,

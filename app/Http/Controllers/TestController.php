@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Test;
+use App\Models\GrupTest;
 use App\Models\NilaiNormal;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,13 +13,14 @@ class TestController extends Controller
 {
     public function index()
     {
-        $tests = Test::orderBy('nama')->get();
+        $tests = Test::with('grupTest')->orderBy('nama')->get();
         return view('tests.index', compact('tests'));
     }
 
     public function create()
     {
-        return view('tests.create');
+        $grupTests = GrupTest::all();
+        return view('tests.create', compact('grupTests'));
     }
 
     public function store(Request $request)
@@ -33,7 +35,8 @@ class TestController extends Controller
                 'satuan' => 'required|string|max:50',
                 'harga_umum' => 'required|integer|min:0',
                 'harga_bpjs' => 'required|integer|min:0',
-                'grup_test' => ['required', Rule::in(['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya'])],
+                'grup_test_id' => 'required|exists:grup_tests,id',
+                // 'grup_test' => ['required', Rule::in(['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya'])],
                 'sub_grup' => ['required', Rule::in(['Cairan dan Parasitologi (E1)', 'Elektrometri (D1)', 'Endokrin Metabolik (B1)', 'Faal Ginjal (B3)', 'Faal Hati (B2)', 'Faal Hemotsasis (A2)', 'Faal Tiroid (B5)', 'Hematologi (A1)', 'Imunologi / Serologi (B4)', 'Marker Infeksi / Inflamasi (C1)', 'Marker Jantung (C2)', 'Lain - Lain (D2)'])],
                 'jenis_sampel' => ['required', Rule::in(['Whole Blood EDTA', 'Whole Blood Heparin', 'Serum', 'Plasma Citrat', 'Urin', 'Feaces', 'Sputum', 'Cairan', 'LCS', 'Preparat', 'Swab'])],
                 'interpretasi' => 'nullable|string',
@@ -74,8 +77,9 @@ class TestController extends Controller
 
     public function edit(Test $test)
     {
+        $grupTests = GrupTest::all();
         $test->load('normalValues');
-        return view('tests.edit', compact('test'));
+        return view('tests.edit', compact('test', 'grupTests'));
     }
 
     public function update(Request $request, Test $test)
@@ -90,7 +94,8 @@ class TestController extends Controller
                 'satuan' => 'required|string|max:50',
                 'harga_umum' => 'required|integer|min:0',
                 'harga_bpjs' => 'required|integer|min:0',
-                'grup_test' => ['required', Rule::in(['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya'])],
+                'grup_test_id' => 'required|exists:grup_tests,id',
+                // 'grup_test' => ['required', Rule::in(['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya'])],
                 'sub_grup' => ['required', Rule::in(['Cairan dan Parasitologi (E1)', 'Elektrometri (D1)', 'Endokrin Metabolik (B1)', 'Faal Ginjal (B3)', 'Faal Hati (B2)', 'Faal Hemotsasis (A2)', 'Faal Tiroid (B5)', 'Hematologi (A1)', 'Imunologi / Serologi (B4)', 'Marker Infeksi / Inflamasi (C1)', 'Marker Jantung (C2)', 'Lain - Lain (D2)'])],
                 'jenis_sampel' => ['required', Rule::in(['Whole Blood EDTA', 'Whole Blood Heparin', 'Serum', 'Plasma Citrat', 'Urin', 'Feaces', 'Sputum', 'Cairan', 'LCS', 'Preparat', 'Swab'])],
                 'interpretasi' => 'nullable|string',

@@ -77,11 +77,14 @@ class DashboardController extends Controller
         } elseif ($todayRevenue > 0) {
             $revenuePercentageChange = 100;
         }
+
+        // Perbaikan query untuk mengambil data kunjungan per grup test
         $testGroupCounts = DB::table('visits')
             ->join('visit_tests', 'visits.id', '=', 'visit_tests.visit_id')
             ->join('tests', 'visit_tests.test_id', '=', 'tests.id')
-            ->select('tests.grup_test', DB::raw('count(DISTINCT visits.id) as visit_count'))
-            ->groupBy('tests.grup_test')
+            ->join('grup_tests', 'tests.grup_test_id', '=', 'grup_tests.id')
+            ->select('grup_tests.nama as grup_test_nama', DB::raw('count(DISTINCT visits.id) as visit_count'))
+            ->groupBy('grup_test_nama')
             ->get();
 
         return view('dashboard', compact(

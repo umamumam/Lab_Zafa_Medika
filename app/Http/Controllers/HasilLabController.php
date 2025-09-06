@@ -266,6 +266,7 @@ class HasilLabController extends Controller
             'ruangan',
             'visitTests' => function ($query) {
                 $query->with([
+                    'test.grupTest',
                     'test.detailTests' => function ($q) {
                         $q->where('status', 'Aktif')->orderBy('urutan');
                     },

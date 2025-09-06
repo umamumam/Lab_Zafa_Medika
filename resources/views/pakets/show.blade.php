@@ -58,7 +58,7 @@
                                         <td>{{ $test->kode }}</td>
                                         <td>{{ $test->nama }}</td>
                                         <td>{{ $test->pivot->jumlah }}</td>
-                                        <td>{{ $test->grup_test }}</td>
+                                        <td>{{ $test->grupTest->nama }}</td>
                                         <td>{{ $test->sub_grup }}</td>
                                     </tr>
                                     @endforeach

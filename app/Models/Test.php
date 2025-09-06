@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Validation\Rule;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Test extends Model
 {
@@ -22,7 +23,7 @@ class Test extends Model
         'satuan',
         'harga_umum',
         'harga_bpjs',
-        'grup_test',
+        'grup_test_id',
         'sub_grup',
         'jenis_sampel',
         'interpretasi',
@@ -42,7 +43,8 @@ class Test extends Model
             'satuan' => 'required|string|max:50',
             'harga_umum' => 'required|integer|min:0',
             'harga_bpjs' => 'required|integer|min:0',
-            'grup_test' => ['required', Rule::in(['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya'])],
+            // 'grup_test' => ['required', Rule::in(['Hematologi', 'Kimia Klinik', 'Imunologi / Serologi', 'Mikrobiologi', 'Khusus', 'Lainnya'])],
+            'grup_test_id' => 'required|integer|exists:grup_tests,id',
             'sub_grup' => ['required', Rule::in(['Cairan dan Parasitologi (E1)', 'Elektrometri (D1)', 'Endokrin Metabolik (B1)', 'Faal Ginjal (B3)', 'Faal Hati (B2)', 'Faal Hemotsasis (A2)', 'Faal Tiroid (B5)', 'Hematologi (A1)', 'Imunologi / Serologi (B4)', 'Marker Infeksi / Inflamasi (C1)', 'Marker Jantung (C2)', 'Lain - Lain (D2)'])],
             'jenis_sampel' => ['required', Rule::in(['Whole Blood EDTA', 'Whole Blood Heparin', 'Serum', 'Plasma Citrat', 'Urin', 'Feaces', 'Sputum', 'Cairan', 'LCS', 'Preparat', 'Swab'])],
             'interpretasi' => 'nullable|string',
@@ -80,5 +82,10 @@ class Test extends Model
     public function normalValues(): HasMany
     {
         return $this->hasMany(NilaiNormal::class, 'test_id');
+    }
+
+    public function grupTest(): BelongsTo
+    {
+        return $this->belongsTo(GrupTest::class);
     }
 }

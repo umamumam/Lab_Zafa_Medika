@@ -10,6 +10,7 @@ use App\Http\Controllers\PasienController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RuanganController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\GrupTestController;
 use App\Http\Controllers\HasilLabController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MetodebyrController;
@@ -39,6 +40,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('dokters', DokterController::class);
     Route::resource('metodebyrs', MetodebyrController::class);
+    Route::resource('grup_tests', GrupTestController::class);
     Route::resource('ruangans', RuanganController::class);
     Route::resource('tests', TestController::class);
     Route::resource('detail_tests', DetailTestController::class);
@@ -72,6 +74,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pemeriksaan/kimiaklinik', [VisitController::class, 'KimiaKlinik'])->name('pemeriksaan.kimiaklinik');
     Route::get('/pemeriksaan/imunologiserologi', [VisitController::class, 'imunologiSerologi'])->name('pemeriksaan.imunologiserologi');
     Route::get('/pemeriksaan/mikrobiologi', [VisitController::class, 'mikrobiologi'])->name('pemeriksaan.mikrobiologi');
+    Route::get('/pemeriksaan/urinalisa', [VisitController::class, 'Urinalisa'])->name('pemeriksaan.Urinalisa');
     Route::get('/pemeriksaan/khusus', [VisitController::class, 'khusus'])->name('pemeriksaan.khusus');
     Route::get('/pemeriksaan/lainnya', [VisitController::class, 'lainnya'])->name('pemeriksaan.lainnya');
     Route::get('/pemeriksaan/paket', [VisitController::class, 'Paket'])->name('pemeriksaan.paket');

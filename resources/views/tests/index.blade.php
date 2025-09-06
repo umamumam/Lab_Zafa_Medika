@@ -46,7 +46,7 @@
                             <td>{{ $test->satuan }}</td>
                             <td>{{ number_format($test->harga_umum, 0, ',', '.') }}</td>
                             <td>{{ number_format($test->harga_bpjs, 0, ',', '.') }}</td>
-                            <td>{{ $test->grup_test }}</td>
+                            <td>{{ $test->grupTest->nama }}</td>
                             <td>{{ $test->sub_grup }}</td>
                             <td>{{ $test->jenis_sampel }}</td>
                             <td>

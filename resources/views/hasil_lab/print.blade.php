@@ -171,7 +171,7 @@
         </thead>
         <tbody>
             @php
-            $groupedTests = $visit->visitTests->groupBy('test.grup_test');
+            $groupedTests = $visit->visitTests->groupBy('test.grupTest.nama');
             @endphp
             @foreach($groupedTests as $grupTest => $visitTests)
             <tr>
