@@ -196,7 +196,7 @@
                                                         value="{{ $visitTest->test_id }}">
                                                     <div class="fw-bold">{{ $visitTest->test->kode }} - {{
                                                         $visitTest->test->nama }}</div>
-                                                    <small class="text-muted">{{ $visitTest->test->grup_test }} - {{
+                                                    <small class="text-muted">{{ $visitTest->test->grupTest->nama }} - {{
                                                         $visitTest->test->sub_grup }}</small>
                                                 </td>
                                                 <td class="align-middle">

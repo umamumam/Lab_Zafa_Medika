@@ -831,7 +831,7 @@ class VisitController extends Controller
                     'nama' => $test->nama,
                     'harga_umum' => $test->harga_umum,
                     'harga_bpjs' => $test->harga_bpjs,
-                    'grup_test' => $test->grup_test ?? '',
+                    'grup_test' => $test->grupTest->nama ?? '',
                     'sub_grup' => $test->sub_grup ?? '',
                     'jumlah_paket' => $paketItem->jumlah,
                 ];

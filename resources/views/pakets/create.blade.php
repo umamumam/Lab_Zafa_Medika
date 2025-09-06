@@ -137,7 +137,7 @@
                                                         <option value="">Pilih Pemeriksaan</option>
                                                         @foreach($tests as $test)
                                                         <option value="{{ $test->id }}"
-                                                            data-grup="{{ $test->grup_test }}"
+                                                            data-grup="{{ $test->grupTest->nama }}"
                                                             data-subgrup="{{ $test->sub_grup }}">
                                                             {{ $test->kode }} - {{ $test->nama }}
                                                         </option>
