@@ -229,14 +229,17 @@
                                 <h6 class="text-primary border-bottom pb-2 mb-3">VOUCHER DISKON</h6>
 
                                 <div class="form-group mb-3">
-                                    <select class="form-select select2 @error('voucher_id') is-invalid @enderror"
-                                        id="voucher_id" name="voucher_id">
+                                    <select class="form-select select2 @error('voucher_id') is-invalid @enderror" id="voucher_id" name="voucher_id">
                                         <option value="">Pilih Voucher</option>
                                         @foreach($vouchers as $voucher)
-                                        <option value="{{ $voucher->id }}" data-value="{{ $voucher->nilai_diskon }}"
+                                        <option value="{{ $voucher->id }}" data-value="{{ $voucher->value }}" data-tipe="{{ $voucher->tipe }}"
                                             @selected(old('voucher_id')==$voucher->id)>
-                                            {{ $voucher->kode }} - {{ $voucher->nama }} (Diskon: Rp {{
-                                            number_format($voucher->nilai_diskon, 0, ',', '.') }})
+                                            {{ $voucher->kode }} - {{ $voucher->nama }} (Diskon:
+                                            @if($voucher->tipe === 'persen')
+                                                {{ $voucher->value }}%)
+                                            @else
+                                                Rp {{ number_format($voucher->value, 0, ',', '.') }})
+                                            @endif
                                         </option>
                                         @endforeach
                                     </select>
@@ -544,6 +547,9 @@
             let totalBiayaPemeriksaan = 0;
             const currentPaketId = $('#hidden_paket_id').val();
             const jenisPasien = $('#jenis_pasien').val();
+            const voucherOption = $('#voucher_id option:selected');
+            const voucherValue = voucherOption.data('value') || 0;
+            const voucherTipe = voucherOption.data('tipe');
 
             if (currentPaketId) {
                 const selectedPaketOption = $('#paket_id_select option:selected');
@@ -562,9 +568,15 @@
                 });
             }
 
-            const voucherValue = $('#voucher_id option:selected').data('value') || 0;
-            let diskonNominal = parseInt(voucherValue);
-            diskonNominal = Math.min(diskonNominal, totalBiayaPemeriksaan);
+            let diskonNominal = 0;
+
+            if (voucherTipe === 'persen') {
+                diskonNominal = totalBiayaPemeriksaan * (voucherValue / 100);
+                diskonNominal = Math.min(diskonNominal, totalBiayaPemeriksaan);
+            } else {
+                diskonNominal = parseInt(voucherValue) || 0;
+                diskonNominal = Math.min(diskonNominal, totalBiayaPemeriksaan);
+            }
 
             let totalSetelahDiskon = totalBiayaPemeriksaan - diskonNominal;
             if (jenisPasien === 'BPJS') {
