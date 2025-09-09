@@ -238,6 +238,11 @@
             theme: 'bootstrap-5'
         });
 
+        $('#paketTestItems').on('click', '.remove-paket-test', function() {
+            $(this).closest('tr').remove();
+            reindexPaketTests();
+        });
+
         $('#addPaketTest').click(function() {
             const testSelect = $('#test_id_paket');
             const testId = testSelect.val();
