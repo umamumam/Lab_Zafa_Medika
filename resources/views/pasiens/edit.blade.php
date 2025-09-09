@@ -56,7 +56,8 @@
                             <select class="form-control @error('jenis_kelamin') is-invalid @enderror" id="jenis_kelamin"
                                 name="jenis_kelamin" required>
                                 <option value="">Pilih Jenis Kelamin</option>
-                                <option value="Laki - Laki" {{ old('jenis_kelamin', $pasien->jenis_kelamin) == 'Laki - Laki' ? 'selected' : '' }}>Laki - Laki</option>
+                                <option value="Laki - Laki" {{ old('jenis_kelamin', $pasien->jenis_kelamin) == 'Laki -
+                                    Laki' ? 'selected' : '' }}>Laki - Laki</option>
                                 <option value="Perempuan" {{ old('jenis_kelamin', $pasien->jenis_kelamin) == 'Perempuan'
                                     ? 'selected' : '' }}>Perempuan</option>
                             </select>
@@ -71,9 +72,9 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="nik">NIK <span class="text-danger">*</span></label>
+                            <label for="nik">NIK</label>
                             <input type="text" class="form-control @error('nik') is-invalid @enderror" id="nik"
-                                name="nik" value="{{ old('nik', $pasien->nik) }}" maxlength="16" required>
+                                name="nik" value="{{ old('nik', $pasien->nik) }}" maxlength="16">
                             <small class="text-muted">16 digit angka</small>
                             @error('nik')
                             <span class="invalid-feedback" role="alert">
