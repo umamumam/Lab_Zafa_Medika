@@ -255,8 +255,20 @@ class VisitController extends Controller
             // Temukan visit yang akan diupdate
             $visit = Visit::with(['visitTests'])->findOrFail($id);
             $tglOrder = $request->tgl_order;
-            if ($tglOrder) {
-                $tglOrder = Carbon::createFromFormat('d/m/Y H:i', $tglOrder);
+            if ($request->tgl_order && Carbon::createFromFormat('d/m/Y H:i', $request->tgl_order)->toDateString() !== $visit->tgl_order->toDateString()) {
+                $tglOrderBaru = Carbon::createFromFormat('d/m/Y H:i', $request->tgl_order);
+                $prefixBaru = 'PK' . $tglOrderBaru->format('Ymd');
+
+                $lastOrderBaru = Visit::where('no_order', 'like', $prefixBaru . '%')
+                    ->orderBy('no_order', 'desc')
+                    ->first();
+
+                $lastNumberBaru = $lastOrderBaru ? (int) substr($lastOrderBaru->no_order, -3) : 0;
+                $newNumberBaru = str_pad($lastNumberBaru + 1, 3, '0', STR_PAD_LEFT);
+                $no_orderBaru = $prefixBaru . $newNumberBaru;
+
+                $visit->no_order = $no_orderBaru;
+                $visit->tgl_order = $tglOrderBaru;
             }
             // Update data utama visit
             $visit->fill($request->only([
