@@ -35,7 +35,7 @@ class Pasien extends Model
             // Cari norm terakhir
             $lastNorm = DB::table('pasiens')
                 ->select('norm')
-                ->orderBy('id', 'desc')
+                ->orderBy('norm', 'desc')
                 ->first();
             $nextNumber = $lastNorm ? ((int)$lastNorm->norm) + 1 : 1;
             $model->norm = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
