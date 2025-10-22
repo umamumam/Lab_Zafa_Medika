@@ -49,7 +49,11 @@ class User extends Authenticatable
     }
     public function visits()
     {
-        return $this->hasMany(Visit::class);
+        return $this->hasMany(Visit::class, 'user_id');
+    }
+    public function visitsAsSampler()
+    {
+        return $this->hasMany(Visit::class, 'sampling_id');
     }
     public function validatedHasilLabs()
     {

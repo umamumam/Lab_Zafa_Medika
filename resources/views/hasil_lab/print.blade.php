@@ -222,7 +222,7 @@
         </tr>
         <tr>
             <td style="padding: 2px 0; vertical-align: top;">Jam Sampling</td>
-            <td style="padding: 2px 0;">: {{ $jamSampling }} | {{ $verifikator }}</td>
+            <td style="padding: 2px 0;">: {{ $jamSampling }} | {{ $visit->sampler->name ?? '-' }}</td>
         </tr>
         <tr>
             <td style="padding: 2px 0; vertical-align: top;">Jam Selesai</td>
@@ -241,7 +241,7 @@
             <td style="padding: 2px 0;">
                 : H : hasil pemeriksaan di atas nilai normal.<br>
                 &nbsp;&nbsp;L : hasil pemeriksaan di bawah nilai normal.<br>
-                &nbsp;&nbsp; * : hasil pemeriksaan abnormal.
+                {{-- &nbsp;&nbsp; * : hasil pemeriksaan abnormal. --}}
             </td>
         </tr>
     </table>

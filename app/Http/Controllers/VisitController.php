@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Config;
 use App\Exports\LaporanPembayaranExport;
 use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
 use Milon\Barcode\Facades\DNS2DFacade as DNS2D;
+use Illuminate\Support\Facades\Auth;
 
 class VisitController extends Controller
 {
@@ -377,6 +378,8 @@ class VisitController extends Controller
             'status_order' => 'required|in:Sampling,Proses,Selesai',
         ]);
 
+        $currentSamplerId = Auth::id();
+
         DB::beginTransaction();
 
         try {
@@ -388,6 +391,10 @@ class VisitController extends Controller
 
             $originalStatus = $visit->status_order;
             $visit->update(['status_order' => $request->status_order]);
+            if ($request->status_order === 'Proses' && $visit->sampling_id === null) {
+                $updateData['sampling_id'] = $currentSamplerId;
+            }
+            $visit->update($updateData);
             if ($originalStatus !== 'Proses' && $request->status_order === 'Proses') {
                 $visitDate = Carbon::parse($visit->tgl_order)->toDateString();
                 $currentTime = Carbon::now()->toTimeString();

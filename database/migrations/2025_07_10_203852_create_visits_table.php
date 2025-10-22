@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('no_order')->unique();
             $table->datetime('tgl_order');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('sampling_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('pasien_id')->constrained('pasiens')->onDelete('cascade');
             $table->enum('jenis_pasien', ['Umum', 'BPJS']);
             $table->foreignId('dokter_id')->nullable()->constrained('dokters')->onDelete('set null');

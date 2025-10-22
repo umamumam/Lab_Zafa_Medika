@@ -13,6 +13,7 @@ class Visit extends Model
         'no_order',
         'tgl_order',
         'user_id',
+        'sampling_id',
         'pasien_id',
         'jenis_pasien',
         'dokter_id',
@@ -38,7 +39,12 @@ class Visit extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function sampler()
+    {
+        return $this->belongsTo(User::class, 'sampling_id');
     }
 
     public function pasien()
