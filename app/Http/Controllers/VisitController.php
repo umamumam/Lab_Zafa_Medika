@@ -82,12 +82,13 @@ class VisitController extends Controller
             'voucher_id' => 'nullable|exists:vouchers,id',
             'metodebyr_id' => 'nullable|exists:metodebyrs,id',
             'paket_id' => 'nullable|exists:pakets,id',
-            // 'tests' hanya dibutuhkan jika tidak ada paket_id
             'tests' => 'nullable|array',
             'tests.*.test_id' => 'required_with:tests|exists:tests,id',
             'tests.*.jumlah' => 'required_with:tests|integer|min:1',
+            'tests.*.from_paket' => 'sometimes|in:0,1',
             'tgl_order' => 'nullable|date_format:d/m/Y H:i',
         ]);
+
         if (!$request->filled('paket_id') && (!isset($request->tests) || empty($request->tests))) {
             return back()->withErrors(['general' => 'Pilih setidaknya satu paket atau satu tes.'])->withInput();
         }
@@ -113,7 +114,6 @@ class VisitController extends Controller
 
             $no_order = $prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
 
-            // Buat entri Visit
             $visit = Visit::create([
                 'no_order' => $no_order,
                 'tgl_order' => $tglOrder,
@@ -134,43 +134,73 @@ class VisitController extends Controller
                 'paket_id' => $request->paket_id,
             ]);
 
+            $total_tagihan = 0;
+            $total_diskon = 0;
+
             if ($request->filled('paket_id')) {
-                $paket = Paket::with('paketItems.test')->findOrFail($request->paket_id);
-                foreach ($paket->paketItems as $paketItem) {
-                    $testModel = $paketItem->test;
-                    if ($testModel) {
-                        $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
-                        $subtotal = $harga * $paketItem->jumlah;
-                        VisitTest::create([
-                            'visit_id' => $visit->id,
-                            'test_id' => $testModel->id,
-                            'harga' => $harga,
-                            'jumlah' => $paketItem->jumlah,
-                            'subtotal' => $subtotal,
-                        ]);
+                $paket = Paket::findOrFail($request->paket_id);
+                $harga_paket = ($request->jenis_pasien === 'BPJS')
+                    ? $paket->harga_bpjs
+                    : $paket->harga_umum;
+
+                $paket_charge = ($request->jenis_pasien === 'BPJS') ? 0 : $harga_paket;
+                $total_tagihan += $paket_charge;
+            }
+
+            if (isset($request->tests) && !empty($request->tests)) {
+                foreach ($request->tests as $testData) {
+                    $testModel = Test::findOrFail($testData['test_id']);
+
+                    $harga = ($request->jenis_pasien === 'BPJS')
+                        ? $testModel->harga_bpjs
+                        : $testModel->harga_umum;
+
+                    $jumlah = $testData['jumlah'];
+                    $subtotal = $harga * $jumlah;
+
+                    $fromPaket = $testData['from_paket'] ?? '0';
+
+                    if ($fromPaket == '0') {
+                        $total_tagihan += $subtotal;
                     }
-                }
-            } else {
-                foreach ($request->tests as $test) {
-                    $testModel = Test::find($test['test_id']);
-                    $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
-                    $subtotal = $harga * $test['jumlah'];
 
                     VisitTest::create([
                         'visit_id' => $visit->id,
-                        'test_id' => $test['test_id'],
+                        'test_id' => $testData['test_id'],
                         'harga' => $harga,
-                        'jumlah' => $test['jumlah'],
+                        'jumlah' => $jumlah,
                         'subtotal' => $subtotal,
+                        'from_paket' => $fromPaket,
                     ]);
                 }
             }
-            $visit->calculateTotal();
+
+            if ($request->filled('voucher_id') && $total_tagihan > 0) {
+                $voucher = Voucher::findOrFail($request->voucher_id);
+                $voucherValue = $voucher->value;
+                $voucherTipe = $voucher->tipe;
+
+                if ($voucherTipe === 'persen') {
+                    $total_diskon = $total_tagihan * ($voucherValue / 100);
+                } else {
+                    $total_diskon = $voucherValue;
+                }
+
+                $total_diskon = min($total_diskon, $total_tagihan);
+            }
+
+            $visit->total_tagihan = $total_tagihan;
+            $visit->total_diskon = $total_diskon;
+            $total_bayar = $total_tagihan - $total_diskon;
+
             if ($request->jenis_pasien === 'BPJS') {
                 $visit->dibayar = 0;
                 $visit->status_pembayaran = 'Lunas';
-                $visit->save();
+            } else {
+                $visit->dibayar = $total_bayar;
+                $visit->status_pembayaran = ($total_bayar <= 0) ? 'Lunas' : 'Belum Lunas';
             }
+            $visit->save();
             DB::commit();
             return redirect()->route('visits.show', $visit->id)
                 ->with('success', 'Order berhasil dibuat dengan nomor: ' . $no_order);

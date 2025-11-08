@@ -23,7 +23,7 @@
                     <form action="{{ route('visits.store') }}" method="POST" id="orderForm">
                         @csrf
 
-                        {{-- Ini akan mengirimkan nilai paket_id yang dipilih ke controller --}}
+                        {{-- Input untuk paket_id --}}
                         <input type="hidden" name="paket_id" id="hidden_paket_id" value="{{ old('paket_id') }}">
 
                         <div class="mb-4 border-bottom pb-3">
@@ -46,6 +46,7 @@
                             </div>
                         </div>
 
+                        {{-- Data Pasien & Pengirim (tetap sama) --}}
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <h6 class="text-primary border-bottom pb-2 mb-3">DATA PASIEN</h6>
@@ -229,16 +230,17 @@
                                 <h6 class="text-primary border-bottom pb-2 mb-3">VOUCHER DISKON</h6>
 
                                 <div class="form-group mb-3">
-                                    <select class="form-select select2 @error('voucher_id') is-invalid @enderror" id="voucher_id" name="voucher_id">
+                                    <select class="form-select select2 @error('voucher_id') is-invalid @enderror"
+                                        id="voucher_id" name="voucher_id">
                                         <option value="">Pilih Voucher</option>
                                         @foreach($vouchers as $voucher)
-                                        <option value="{{ $voucher->id }}" data-value="{{ $voucher->value }}" data-tipe="{{ $voucher->tipe }}"
-                                            @selected(old('voucher_id')==$voucher->id)>
+                                        <option value="{{ $voucher->id }}" data-value="{{ $voucher->value }}"
+                                            data-tipe="{{ $voucher->tipe }}" @selected(old('voucher_id')==$voucher->id)>
                                             {{ $voucher->kode }} - {{ $voucher->nama }} (Diskon:
                                             @if($voucher->tipe === 'persen')
-                                                {{ $voucher->value }}%)
+                                            {{ $voucher->value }}%)
                                             @else
-                                                Rp {{ number_format($voucher->value, 0, ',', '.') }})
+                                            Rp {{ number_format($voucher->value, 0, ',', '.') }})
                                             @endif
                                         </option>
                                         @endforeach
@@ -321,6 +323,7 @@
     <tr>
         <td>
             <input type="hidden" class="test-id-input" name="tests[][test_id]" value="">
+            <input type="hidden" class="test-from-paket" name="tests[][from_paket]" value="0">
             <div class="fw-bold test-name"></div>
             <small class="text-muted test-grup"></small>
         </td>
@@ -337,6 +340,29 @@
         </td>
     </tr>
 </template>
+
+<template id="paketTestTemplate">
+    <tr class="table-info">
+        <td>
+            <input type="hidden" class="test-id-input" name="tests[][test_id]" value="">
+            <input type="hidden" class="test-from-paket" name="tests[][from_paket]" value="1">
+            <div class="fw-bold test-name"></div>
+            <small class="text-muted test-grup"></small>
+            <small class="badge bg-primary">Paket</small>
+        </td>
+        <td class="align-middle">
+            <input type="number" class="form-control form-control-sm test-jumlah" name="tests[][jumlah]" min="1"
+                max="10" value="1" readonly style="background-color: #e9ecef;">
+        </td>
+        <td class="test-harga align-middle"></td>
+        <td class="test-subtotal align-middle"></td>
+        <td class="align-middle text-center">
+            <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                <i class="fas fa-lock"></i>
+            </button>
+        </td>
+    </tr>
+</template>
 @endsection
 
 @push('scripts')
@@ -348,52 +374,58 @@
 
 <script>
     $(document).ready(function() {
+        let selectedPaket = null;
+
         $('.select2').select2({
             width: '100%',
             theme: 'bootstrap-5'
         });
+
         $('#pasien_id').change(function() {
             const selectedOption = $(this).find('option:selected');
             const jenisPasien = selectedOption.data('jenis');
             const tglLahir = selectedOption.data('tgl_lahir');
             const jk = selectedOption.data('jk');
+
             $('#jenis_pasien').val(jenisPasien === 'BPJS' ? 'BPJS' : 'Umum').trigger('change');
+
             $('#tgl_lahir').val(tglLahir ? formatDate(tglLahir) : '-');
             $('#jenis_kelamin').val(jk || '-');
+
             updateAllTestPrices();
             updateTotal();
         });
+
         $('#ruangan_id').change(function() {
             const dokterId = $(this).find('option:selected').data('dokter');
             if (dokterId) {
                 $('#dokter_id').val(dokterId).trigger('change');
             }
         });
+
         $('#addTest').click(function() {
             const testSelect = $('#test_id');
             const testId = testSelect.val();
             const testOption = testSelect.find('option:selected');
 
             if (!testId) {
-                alert('Pilih pemeriksaan terlebih dahulu.');
-                return;
-            }
-            if ($(`#testItems input.test-id-input[value="${testId}"]`).length > 0) {
-                alert('Pemeriksaan ini sudah ditambahkan.');
-                return;
-            }
-            if ($('#hidden_paket_id').val()) {
-                alert('Anda tidak bisa menambahkan pemeriksaan individual saat paket dipilih. Kosongkan pilihan paket terlebih dahulu.');
-                testSelect.val('').trigger('change');
-                $('#jumlah').val(1);
+                console.error('Pilih pemeriksaan terlebih dahulu.');
                 return;
             }
 
-            addTestItem(
+            if (isTestAlreadyAdded(testId)) {
+                console.error('Pemeriksaan ini sudah ditambahkan.');
+                return;
+            }
+
+            const hargaUmum = parseFloat(testOption.data('harga-umum')) || 0;
+            const hargaBpjs = parseFloat(testOption.data('harga-bpjs')) || 0;
+
+            addIndividualTestItem(
                 testId,
                 testOption.text(),
-                testOption.data('harga-umum'),
-                testOption.data('harga-bpjs'),
+                hargaUmum,
+                hargaBpjs,
                 testOption.data('grup'),
                 testOption.data('subgrup'),
                 $('#jumlah').val() || 1
@@ -401,66 +433,105 @@
 
             testSelect.val('').trigger('change');
             $('#jumlah').val(1);
+            updateTotal();
         });
 
         $('#paket_id_select').change(function() {
             const paketId = $(this).val();
-            $('#hidden_paket_id').val(paketId);
-            $('#testItems').empty();
+            const paketOption = $(this).find('option:selected');
 
             if (paketId) {
-                disableIndividualTestControls();
+                selectedPaket = {
+                    id: paketId,
+                    nama: paketOption.text(),
+                    harga_umum: parseFloat(paketOption.data('harga-umum')) || 0,
+                    harga_bpjs: parseFloat(paketOption.data('harga-bpjs')) || 0
+                };
+
+                $('#hidden_paket_id').val(paketId);
+                showPaketInfo();
+
                 $.ajax({
                     url: `/api/pakets/${paketId}/tests`,
                     method: 'GET',
                     success: function(response) {
+                        $('#testItems tr.paket-item').remove();
+
                         if (response.length > 0) {
                             response.forEach(function(test) {
-                                addTestItem(
+                                addPaketTestItem(
                                     test.id,
                                     `${test.kode} - ${test.nama}`,
-                                    test.harga_umum,
-                                    test.harga_bpjs,
+                                    parseFloat(test.harga_umum) || 0, // Pastikan angka
+                                    parseFloat(test.harga_bpjs) || 0, // Pastikan angka
                                     test.grup_test,
                                     test.sub_grup,
-                                    test.jumlah_paket,
-                                    true
+                                    test.jumlah_paket
                                 );
                             });
-                        } else {
-                            alert('Tidak ada pemeriksaan dalam paket ini.');
                         }
+                        updateAllTestPrices();
                         updateTotal();
                     },
                     error: function(xhr, status, error) {
-                        alert('Gagal mengambil data paket: ' + error);
-                        $('#paket_id_select').val('').trigger('change');
-                        $('#hidden_paket_id').val('');
-                        enableIndividualTestControls();
-                        updateTotal();
+                        console.error('Gagal mengambil data paket:', error);
+                        removePaket();
                     }
                 });
             } else {
-                enableIndividualTestControls();
-                updateTotal();
+                removePaket();
             }
         });
 
-        function disableIndividualTestControls() {
-            $('#test_id').prop('disabled', true).val('').trigger('change');
-            $('#jumlah').prop('disabled', true).val(1);
-            $('#addTest').prop('disabled', true);
-            $('#individualTestControls').hide();
+        $('#removePaket').click(function() {
+            removePaket();
+        });
+
+        function showPaketInfo() {
+            const jenisPasien = $('#jenis_pasien').val();
+            const harga = jenisPasien === 'BPJS' ? selectedPaket.harga_bpjs : selectedPaket.harga_umum;
+
+            $('#paketNama').text(selectedPaket.nama);
+            $('#paketHarga').text(formatRupiah(harga));
+            $('#paketInfo').show();
         }
 
-        function enableIndividualTestControls() {
-            $('#test_id').prop('disabled', false).val('').trigger('change');
-            $('#jumlah').prop('disabled', false).val(1);
-            $('#addTest').prop('disabled', false);
-            $('#individualTestControls').show();
+        function removePaket() {
+            selectedPaket = null;
+            $('#hidden_paket_id').val('');
+            $('#paket_id_select').val('').trigger('change');
+            $('#paketInfo').hide();
+            $('#testItems tr.paket-item').remove();
+            updateAllTestPrices();
+            updateTotal();
         }
 
-        function addTestItem(testId, testFullName, hargaUmum, hargaBpjs, grup, subgrup, jumlah, isFromPackage = false) {
+        function addPaketTestItem(testId, testFullName, hargaUmum, hargaBpjs, grup, subgrup, jumlah) {
+
+            const nextIndex = $('#testItems tr').length;
+            const $newRow = $($('#paketTestTemplate').html());
+
+            $newRow.addClass('paket-item');
+            $newRow.attr('data-test-id', testId);
+            $newRow.find('input.test-id-input').attr('name', `tests[${nextIndex}][test_id]`).val(testId);
+            $newRow.find('input.test-from-paket').attr('name', `tests[${nextIndex}][from_paket]`).val('1');
+
+            $newRow.find('input.test-jumlah').attr('name', `tests[${nextIndex}][jumlah]`).val(jumlah);
+
+            $newRow.find('.test-name').text(testFullName.split(' - ')[1].trim());
+            $newRow.find('.test-grup').text(`${grup} - ${subgrup}`);
+
+            $newRow.data('harga-umum', hargaUmum);
+            $newRow.data('harga-bpjs', hargaBpjs);
+
+            if ($('#testItems tr:not(.paket-item)').length > 0) {
+                $('#testItems tr:not(.paket-item)').first().before($newRow);
+            } else {
+                $('#testItems').append($newRow);
+            }
+        }
+
+        function addIndividualTestItem(testId, testFullName, hargaUmum, hargaBpjs, grup, subgrup, jumlah) {
             const jenisPasien = $('#jenis_pasien').val();
             const harga = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
             const subtotal = harga * jumlah;
@@ -468,27 +539,28 @@
             const nextIndex = $('#testItems tr').length;
             const $newRow = $($('#testTemplate').html());
 
+            $newRow.attr('data-test-id', testId);
             $newRow.find('input.test-id-input').attr('name', `tests[${nextIndex}][test_id]`).val(testId);
+            $newRow.find('input.test-from-paket').attr('name', `tests[${nextIndex}][from_paket]`).val('0');
 
             const $jumlahInput = $newRow.find('input.test-jumlah');
             $jumlahInput.attr('name', `tests[${nextIndex}][jumlah]`).val(jumlah);
 
-            if (isFromPackage) {
-                $jumlahInput.prop('readonly', true).css('background-color', '#e9ecef');
-                $newRow.find('.remove-test').prop('disabled', true).hide();
-            } else {
-                $jumlahInput.change(function() {
-                    const newJumlah = $(this).val() || 1;
-                    const newSubtotal = harga * newJumlah;
-                    $(this).closest('tr').find('.test-subtotal').text(formatRupiah(newSubtotal));
-                    updateTotal();
-                });
-                $newRow.find('.remove-test').click(function() {
-                    $(this).closest('tr').remove();
-                    reindexTestItems();
-                    updateTotal();
-                });
-            }
+            $newRow.data('harga-umum', hargaUmum);
+            $newRow.data('harga-bpjs', hargaBpjs);
+
+            $jumlahInput.change(function() {
+                const newJumlah = $(this).val() || 1;
+                const newSubtotal = harga * newJumlah;
+                $(this).closest('tr').find('.test-subtotal').text(formatRupiah(newSubtotal));
+                updateTotal();
+            });
+
+            $newRow.find('.remove-test').click(function() {
+                $(this).closest('tr').remove();
+                reindexTestItems();
+                updateTotal();
+            });
 
             $newRow.find('.test-name').text(testFullName.split(' - ')[1].trim());
             $newRow.find('.test-grup').text(`${grup} - ${subgrup}`);
@@ -496,106 +568,131 @@
             $newRow.find('.test-subtotal').text(formatRupiah(subtotal));
 
             $('#testItems').append($newRow);
-            updateTotal();
         }
+
+        function isTestAlreadyAdded(testId) {
+            return $(`#testItems input.test-id-input[value="${testId}"]`).length > 0;
+        }
+
         function reindexTestItems() {
-            $('#testItems tr').each(function(index) {
+            let index = 0;
+            $('#testItems tr').each(function() {
                 $(this).find('input.test-id-input').attr('name', `tests[${index}][test_id]`);
+                $(this).find('input.test-from-paket').attr('name', `tests[${index}][from_paket]`);
                 $(this).find('input.test-jumlah').attr('name', `tests[${index}][jumlah]`);
+                index++;
             });
         }
+
         function updateAllTestPrices() {
             const jenisPasien = $('#jenis_pasien').val();
-            $('#testItems tr').each(function() {
-                const testId = $(this).find('input.test-id-input').val();
-                const testOption = $(`#test_id option[value="${testId}"]`);
-                const isFromPackage = $(this).find('.test-jumlah').prop('readonly');
-                if (!isFromPackage) {
-                    const jumlah = $(this).find('.test-jumlah').val() || 1;
-                    const harga = jenisPasien === 'BPJS'
-                        ? testOption.data('harga-bpjs')
-                        : testOption.data('harga-umum');
-                    const subtotal = harga * jumlah;
+
+            if (selectedPaket) {
+                const newHargaPaket = jenisPasien === 'BPJS' ? selectedPaket.harga_bpjs : selectedPaket.harga_umum;
+                $('#paketHarga').text(formatRupiah(newHargaPaket));
+
+                $('#testItems tr.paket-item').each(function() {
+                    const harga = 0;
+                    const jumlah = $(this).find('input.test-jumlah').val() || 1;
+                    const subtotal = harga * jumlah; // subtotal 0
 
                     $(this).find('.test-harga').text(formatRupiah(harga));
                     $(this).find('.test-subtotal').text(formatRupiah(subtotal));
-                }
+                });
+            }
+
+            $('#testItems tr:not(.paket-item)').each(function() {
+                const hargaUmum = $(this).data('harga-umum');
+                const hargaBpjs = $(this).data('harga-bpjs');
+
+                // Tentukan harga berdasarkan jenis pasien
+                const harga = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
+
+                const jumlah = $(this).find('input.test-jumlah').val() || 1;
+                const subtotal = harga * jumlah;
+
+                $(this).find('.test-harga').text(formatRupiah(harga));
+                $(this).find('.test-subtotal').text(formatRupiah(subtotal));
             });
+
             updateTotal();
         }
 
         $('#jenis_pasien').change(function() {
-            const currentPaketId = $('#hidden_paket_id').val();
-            if (currentPaketId) {
-                $('#paket_id_select').trigger('change');
-            } else {
-                updateAllTestPrices();
-            }
+            updateAllTestPrices();
         });
+
         $('#voucher_id').change(function() {
             updateTotal();
         });
+
         function formatDate(dateString) {
             if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleDateString('id-ID');
         }
+
         function formatRupiah(angka) {
-            return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            if (typeof angka !== 'number') {
+                angka = parseFloat(angka) || 0;
+            }
+            return 'Rp ' + Math.round(angka).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
+
         function updateTotal() {
-            let totalBiayaPemeriksaan = 0;
-            const currentPaketId = $('#hidden_paket_id').val();
+            let subtotalPaket = 0;
+            let subtotalIndividual = 0;
             const jenisPasien = $('#jenis_pasien').val();
             const voucherOption = $('#voucher_id option:selected');
-            const voucherValue = voucherOption.data('value') || 0;
+            const voucherValue = parseFloat(voucherOption.data('value')) || 0;
             const voucherTipe = voucherOption.data('tipe');
 
-            if (currentPaketId) {
-                const selectedPaketOption = $('#paket_id_select option:selected');
-                if (selectedPaketOption.length > 0 && selectedPaketOption.val() !== '') {
-                    totalBiayaPemeriksaan = (jenisPasien === 'BPJS')
-                        ? selectedPaketOption.data('harga-bpjs')
-                        : selectedPaketOption.data('harga-umum');
-                }
-            } else {
-                $('#testItems tr').each(function() {
-                    const subtotalText = $(this).find('.test-subtotal').text();
-                    const subtotal = parseInt(subtotalText.replace(/\D/g, ''));
-                    if (!isNaN(subtotal)) {
-                        totalBiayaPemeriksaan += subtotal;
-                    }
-                });
+            if (selectedPaket) {
+                const hargaPaket = jenisPasien === 'BPJS' ? selectedPaket.harga_bpjs : selectedPaket.harga_umum;
+                subtotalPaket = jenisPasien === 'BPJS' ? 0 : hargaPaket;
             }
+
+            $('#testItems tr:not(.paket-item)').each(function() {
+                const subtotalText = $(this).find('.test-subtotal').text();
+                const subtotal = parseInt(subtotalText.replace(/\D/g, '')) || 0;
+                subtotalIndividual += subtotal;
+            });
+
+            const totalTagihan = subtotalPaket + subtotalIndividual;
 
             let diskonNominal = 0;
-
             if (voucherTipe === 'persen') {
-                diskonNominal = totalBiayaPemeriksaan * (voucherValue / 100);
-                diskonNominal = Math.min(diskonNominal, totalBiayaPemeriksaan);
+                diskonNominal = totalTagihan * (voucherValue / 100);
+                diskonNominal = Math.min(diskonNominal, totalTagihan);
             } else {
-                diskonNominal = parseInt(voucherValue) || 0;
-                diskonNominal = Math.min(diskonNominal, totalBiayaPemeriksaan);
+                diskonNominal = voucherValue;
+                diskonNominal = Math.min(diskonNominal, totalTagihan);
             }
+            diskonNominal = Math.round(diskonNominal);
 
-            let totalSetelahDiskon = totalBiayaPemeriksaan - diskonNominal;
+            let totalSetelahDiskon = totalTagihan - diskonNominal;
+
             if (jenisPasien === 'BPJS') {
-                totalBiayaPemeriksaan = 0;
-                diskonNominal = 0;
-                totalSetelahDiskon = 0;
+                $('#subtotalPaket').text('Rp 0');
+                $('#subtotalIndividual').text('Rp 0');
+                $('#totalTagihan').text('Rp 0');
+                $('#totalDiskon').text('Rp 0');
+                $('#totalBayar').text('Rp 0');
+            } else {
+                $('#subtotalPaket').text(formatRupiah(subtotalPaket));
+                $('#subtotalIndividual').text(formatRupiah(subtotalIndividual));
+                $('#totalTagihan').text(formatRupiah(totalTagihan));
+                $('#totalDiskon').text(formatRupiah(diskonNominal));
+                $('#totalBayar').text(formatRupiah(totalSetelahDiskon));
             }
-
-            $('#totalTagihan').text(formatRupiah(totalBiayaPemeriksaan));
-            $('#totalDiskon').text(formatRupiah(diskonNominal));
-            $('#totalBayar').text(formatRupiah(totalSetelahDiskon));
         }
+
         updateTotal();
         if ($('#pasien_id').val()) {
             $('#pasien_id').trigger('change');
         }
-        if ($('#paket_id_select').val()) {
-            $('#paket_id_select').trigger('change');
-        }
+
+        updateAllTestPrices();
     });
 </script>
 @endpush
