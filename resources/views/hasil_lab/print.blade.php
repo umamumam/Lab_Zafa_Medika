@@ -214,7 +214,7 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
         <tr>
             <td style="padding: 2px 0; vertical-align: top; width: 20%;">Verifikator</td>
-            <td style="padding: 2px 0;">: 1. Allyssa Dwi Wasilah, S.Tr. Kes | 2. {{ $verifikator }}</td>
+            <td style="padding: 2px 0;">: 1. dr. HASNA, Sp. PK | 2. {{ $verifikator }}</td>
         </tr>
         <tr>
             <td style="padding: 2px 0; vertical-align: top;">Jam Order</td>
@@ -264,7 +264,8 @@
                         {!! $barcode !!}
                     </div>
                 </div>
-                <label><strong>{{ $verifikator }}</strong></label>
+                {{-- <label><strong>{{ $verifikator }}</strong></label> --}}
+                <label><strong>dr. HASNA, Sp. PK</strong></label>
             </td>
         </tr>
     </table>
