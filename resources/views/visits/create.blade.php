@@ -588,15 +588,16 @@
             const jenisPasien = $('#jenis_pasien').val();
 
             if (selectedPaket) {
-                const newHargaPaket = jenisPasien === 'BPJS' ? selectedPaket.harga_bpjs : selectedPaket.harga_umum;
-                $('#paketHarga').text(formatRupiah(newHargaPaket));
 
                 $('#testItems tr.paket-item').each(function() {
-                    const harga = 0;
-                    const jumlah = $(this).find('input.test-jumlah').val() || 1;
-                    const subtotal = harga * jumlah; // subtotal 0
+                    const hargaUmum = $(this).data('harga-umum');
+                    const hargaBpjs = $(this).data('harga-bpjs');
+                    const hargaTampilan = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
 
-                    $(this).find('.test-harga').text(formatRupiah(harga));
+                    const jumlah = $(this).find('input.test-jumlah').val() || 1;
+                    const subtotal = 0;
+
+                    $(this).find('.test-harga').text(formatRupiah(hargaTampilan));
                     $(this).find('.test-subtotal').text(formatRupiah(subtotal));
                 });
             }
@@ -605,7 +606,6 @@
                 const hargaUmum = $(this).data('harga-umum');
                 const hargaBpjs = $(this).data('harga-bpjs');
 
-                // Tentukan harga berdasarkan jenis pasien
                 const harga = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
 
                 const jumlah = $(this).find('input.test-jumlah').val() || 1;
