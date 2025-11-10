@@ -649,7 +649,8 @@
 
             if (selectedPaket) {
                 const hargaPaket = jenisPasien === 'BPJS' ? selectedPaket.harga_bpjs : selectedPaket.harga_umum;
-                subtotalPaket = jenisPasien === 'BPJS' ? 0 : hargaPaket;
+                subtotalPaket = hargaPaket;
+                showPaketInfo();
             }
 
             $('#testItems tr:not(.paket-item)').each(function() {
@@ -672,19 +673,11 @@
 
             let totalSetelahDiskon = totalTagihan - diskonNominal;
 
-            if (jenisPasien === 'BPJS') {
-                $('#subtotalPaket').text('Rp 0');
-                $('#subtotalIndividual').text('Rp 0');
-                $('#totalTagihan').text('Rp 0');
-                $('#totalDiskon').text('Rp 0');
-                $('#totalBayar').text('Rp 0');
-            } else {
-                $('#subtotalPaket').text(formatRupiah(subtotalPaket));
-                $('#subtotalIndividual').text(formatRupiah(subtotalIndividual));
-                $('#totalTagihan').text(formatRupiah(totalTagihan));
-                $('#totalDiskon').text(formatRupiah(diskonNominal));
-                $('#totalBayar').text(formatRupiah(totalSetelahDiskon));
-            }
+            $('#subtotalPaket').text(formatRupiah(subtotalPaket));
+            $('#subtotalIndividual').text(formatRupiah(subtotalIndividual));
+            $('#totalTagihan').text(formatRupiah(totalTagihan));
+            $('#totalDiskon').text(formatRupiah(diskonNominal));
+            $('#totalBayar').text(formatRupiah(totalSetelahDiskon));
         }
 
         updateTotal();

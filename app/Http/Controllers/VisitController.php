@@ -143,8 +143,9 @@ class VisitController extends Controller
                     ? $paket->harga_bpjs
                     : $paket->harga_umum;
 
-                $paket_charge = ($request->jenis_pasien === 'BPJS') ? 0 : $harga_paket;
-                $total_tagihan += $paket_charge;
+                // $paket_charge = ($request->jenis_pasien === 'BPJS') ? 0 : $harga_paket;
+                // $total_tagihan += $paket_charge;
+                $total_tagihan += $harga_paket;
             }
 
             if (isset($request->tests) && !empty($request->tests)) {
