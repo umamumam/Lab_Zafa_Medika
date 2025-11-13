@@ -190,16 +190,16 @@ class VisitController extends Controller
                 $total_diskon = min($total_diskon, $total_tagihan);
             }
 
-            $visit->total_tagihan = $total_tagihan;
+            $visit->total_tagihan = $total_tagihan - $total_diskon;
             $visit->total_diskon = $total_diskon;
-            $total_bayar = $total_tagihan - $total_diskon;
+            $total_bayar = 0;
 
             if ($request->jenis_pasien === 'BPJS') {
                 $visit->dibayar = 0;
                 $visit->status_pembayaran = 'Lunas';
             } else {
                 $visit->dibayar = $total_bayar;
-                $visit->status_pembayaran = ($total_bayar <= 0) ? 'Lunas' : 'Belum Lunas';
+                $visit->status_pembayaran = 'Belum Lunas';
             }
             $visit->save();
             DB::commit();
