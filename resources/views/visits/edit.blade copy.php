@@ -40,7 +40,7 @@
                                     <div class="form-group">
                                         <label for="tgl_order">Tanggal & Waktu Order</label>
                                         <input type="text" name="tgl_order" id="tgl_order" class="form-control"
-                                            value="{{ old('tgl_order', \Carbon\Carbon::parse($visit->tgl_order)->format('d/m/Y H:i')) }}"
+                                            value="{{ old('tgl_order', $visit->tgl_order->format('d/m/Y H:i')) }}"
                                             placeholder="dd/mm/yyyy hh:ii">
                                     </div>
                                 </div>
@@ -77,23 +77,21 @@
                                         <div class="form-group">
                                             <label class="form-label">Tanggal Lahir</label>
                                             <input type="text" class="form-control bg-light" id="tgl_lahir"
-                                                value="{{ $visit->pasien->tgl_lahir ? \Carbon\Carbon::parse($visit->pasien->tgl_lahir)->format('d/m/Y') : '-' }}"
-                                                disabled>
+                                                value="{{ $visit->pasien->tgl_lahir ? \Carbon\Carbon::parse($visit->pasien->tgl_lahir)->format('d/m/Y') : '-' }}" disabled>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label class="form-label">Jenis Kelamin</label>
                                             <input type="text" class="form-control bg-light" id="jenis_kelamin"
-                                                value="{{ $visit->pasien->jenis_kelamin ?? '-' }}" disabled>
+                                                value="{{ $visit->pasien->jenis_kelamin }}" disabled>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <label for="jenis_pasien" class="form-label text-danger">Status Pasien
-                                        <span class="text-danger">*</span>
-                                    </label>
+                                    <label for="jenis_pasien" class="form-label">Status Pasien <span
+                                            class="text-danger">*</span></label>
                                     <select class="form-select @error('jenis_pasien') is-invalid @enderror"
                                         id="jenis_pasien" name="jenis_pasien" required>
                                         <option value="Umum" @selected(old('jenis_pasien', $visit->jenis_pasien)=='Umum' )>Umum</option>
@@ -177,45 +175,12 @@
                                         @foreach($pakets as $paket)
                                         <option value="{{ $paket->id }}" data-harga-umum="{{ $paket->harga_umum }}"
                                             data-harga-bpjs="{{ $paket->harga_bpjs }}"
-                                            @selected(old('paket_id', $visit->paket_id)==$paket->id)>
+                                            @selected($visit->paket_id == $paket->id)>
                                             {{ $paket->kode }} - {{ $paket->nama }}
                                         </option>
                                         @endforeach
                                     </select>
                                 </div>
-
-                                {{-- Info Paket yang dipilih --}}
-                                @if($visit->paket_id)
-                                <div id="paketInfo" class="alert alert-info mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Paket Terpilih:</strong>
-                                            <span id="paketNama">{{ $visit->paket->kode }} - {{ $visit->paket->nama }}</span>
-                                            | <strong>Harga:</strong>
-                                            <span id="paketHarga">
-                                                Rp {{ number_format($visit->jenis_pasien === 'BPJS' ? $visit->paket->harga_bpjs : $visit->paket->harga_umum, 0, ',', '.') }}
-                                            </span>
-                                        </div>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" id="removePaket">
-                                            <i class="fas fa-times me-1"></i> Hapus Paket
-                                        </button>
-                                    </div>
-                                </div>
-                                @else
-                                <div id="paketInfo" class="alert alert-info mb-3" style="display: none;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Paket Terpilih:</strong>
-                                            <span id="paketNama"></span>
-                                            | <strong>Harga:</strong>
-                                            <span id="paketHarga"></span>
-                                        </div>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" id="removePaket">
-                                            <i class="fas fa-times me-1"></i> Hapus Paket
-                                        </button>
-                                    </div>
-                                </div>
-                                @endif
 
                                 <div class="table-responsive mb-3">
                                     <table class="table table-bordered table-sm">
@@ -229,29 +194,22 @@
                                             </tr>
                                         </thead>
                                         <tbody id="testItems">
-                                            {{-- Existing tests will be loaded here by JavaScript --}}
+                                            {{-- Existing items will be loaded here by JavaScript --}}
                                             @foreach($visit->visitTests as $visitTest)
                                                 @if($visitTest->from_paket == 1)
                                                 <tr class="paket-item" data-test-id="{{ $visitTest->test_id }}">
                                                     <td>
                                                         <input type="hidden" class="test-id-input" name="tests[{{ $loop->index }}][test_id]" value="{{ $visitTest->test_id }}">
                                                         <input type="hidden" class="test-from-paket" name="tests[{{ $loop->index }}][from_paket]" value="1">
-                                                        <div class="fw-bold test-name">{{ $visitTest->test->nama }}</div>
-                                                        <small class="text-muted test-grup">{{ $visitTest->test->grupTest->nama }} - {{ $visitTest->test->sub_grup }}</small>
+                                                        <div class="fw-bold">{{ $visitTest->test->nama }}</div>
+                                                        <small class="text-muted">{{ $visitTest->test->grupTest->nama }} - {{ $visitTest->test->sub_grup }}</small>
                                                         <small class="badge bg-primary">Paket</small>
                                                     </td>
                                                     <td class="align-middle">
-                                                        <input type="number" class="form-control form-control-sm test-jumlah"
-                                                            name="tests[{{ $loop->index }}][jumlah]"
-                                                            value="{{ $visitTest->jumlah }}" min="1" max="10" readonly
-                                                            style="background-color: #e9ecef;">
+                                                        <input type="number" class="form-control form-control-sm test-jumlah" name="tests[{{ $loop->index }}][jumlah]" min="1" max="10" value="{{ $visitTest->jumlah }}" readonly style="background-color: #e9ecef;">
                                                     </td>
-                                                    <td class="test-harga align-middle">
-                                                        Rp {{ number_format($visitTest->harga, 0, ',', '.') }}
-                                                    </td>
-                                                    <td class="test-subtotal align-middle">
-                                                        Rp {{ number_format($visitTest->subtotal, 0, ',', '.') }}
-                                                    </td>
+                                                    <td class="test-harga align-middle">Rp {{ number_format($visitTest->harga, 0, ',', '.') }}</td>
+                                                    <td class="test-subtotal align-middle">Rp {{ number_format($visitTest->subtotal, 0, ',', '.') }}</td>
                                                     <td class="align-middle text-center">
                                                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                                                             <i class="fas fa-lock"></i>
@@ -263,20 +221,14 @@
                                                     <td>
                                                         <input type="hidden" class="test-id-input" name="tests[{{ $loop->index }}][test_id]" value="{{ $visitTest->test_id }}">
                                                         <input type="hidden" class="test-from-paket" name="tests[{{ $loop->index }}][from_paket]" value="0">
-                                                        <div class="fw-bold test-name">{{ $visitTest->test->nama }}</div>
-                                                        <small class="text-muted test-grup">{{ $visitTest->test->grupTest->nama }} - {{ $visitTest->test->sub_grup }}</small>
+                                                        <div class="fw-bold">{{ $visitTest->test->nama }}</div>
+                                                        <small class="text-muted">{{ $visitTest->test->grupTest->nama }} - {{ $visitTest->test->sub_grup }}</small>
                                                     </td>
                                                     <td class="align-middle">
-                                                        <input type="number" class="form-control form-control-sm test-jumlah"
-                                                            name="tests[{{ $loop->index }}][jumlah]"
-                                                            value="{{ $visitTest->jumlah }}" min="1" max="10">
+                                                        <input type="number" class="form-control form-control-sm test-jumlah" name="tests[{{ $loop->index }}][jumlah]" min="1" max="10" value="{{ $visitTest->jumlah }}">
                                                     </td>
-                                                    <td class="test-harga align-middle">
-                                                        Rp {{ number_format($visitTest->harga, 0, ',', '.') }}
-                                                    </td>
-                                                    <td class="test-subtotal align-middle">
-                                                        Rp {{ number_format($visitTest->subtotal, 0, ',', '.') }}
-                                                    </td>
+                                                    <td class="test-harga align-middle">Rp {{ number_format($visitTest->harga, 0, ',', '.') }}</td>
+                                                    <td class="test-subtotal align-middle">Rp {{ number_format($visitTest->subtotal, 0, ',', '.') }}</td>
                                                     <td class="align-middle text-center">
                                                         <button type="button" class="btn btn-danger btn-sm remove-test">
                                                             <i class="fas fa-trash-alt"></i>
@@ -329,7 +281,7 @@
                                         @foreach($vouchers as $voucher)
                                         <option value="{{ $voucher->id }}" data-value="{{ $voucher->value }}"
                                             data-tipe="{{ $voucher->tipe }}"
-                                            @selected(old('voucher_id', $visit->voucher_id)==$voucher->id)>
+                                            @selected(old('voucher_id', $visit->voucher_id) == $voucher->id)>
                                             {{ $voucher->kode }} - {{ $voucher->nama }} (Diskon:
                                             @if($voucher->tipe === 'persen')
                                             {{ $voucher->value }}%)
@@ -369,16 +321,8 @@
                                     <div class="row">
                                         <div class="col-md-12">
                                             <div class="d-flex justify-content-between mb-2">
-                                                <strong>Total Tagihan Awal:</strong>
-                                                <span id="totalTagihanAwal">Rp {{ number_format($visit->total_tagihan, 0, ',', '.') }}</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <strong>Tambahan Item Baru:</strong>
-                                                <span id="tambahanItem">Rp 0</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <strong>Total Tagihan Sekarang:</strong>
-                                                <span id="totalTagihan">Rp {{ number_format($visit->total_tagihan, 0, ',', '.') }}</span>
+                                                <strong>Total Tagihan:</strong>
+                                                <span id="totalTagihan">Rp {{ number_format($visit->total_tagihan + $visit->total_diskon, 0, ',', '.') }}</span>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
                                                 <strong>Diskon Voucher:</strong>
@@ -387,7 +331,7 @@
                                                 </span>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <strong>Total Harus Bayar:</strong>
+                                                <strong>Total Bayar:</strong>
                                                 <span id="totalBayar" class="fw-bold">Rp {{ number_format($visit->total_tagihan, 0, ',', '.') }}</span>
                                             </div>
                                         </div>
@@ -476,27 +420,25 @@
 <script>
     $(document).ready(function() {
         let selectedPaket = null;
-        let totalTagihanAwal = {{ $visit->total_tagihan }};
-        let existingTests = {!! json_encode($visit->visitTests->pluck('test_id')->toArray()) !!};
-
-        // Inisialisasi data paket jika ada
-        @if($visit->paket_id)
-        selectedPaket = {
-            id: {{ $visit->paket_id }},
-            nama: '{{ $visit->paket->kode }} - {{ $visit->paket->nama }}',
-            harga_umum: {{ $visit->paket->harga_umum }},
-            harga_bpjs: {{ $visit->paket->harga_bpjs }}
-        };
-        @endif
+        let baseTotalTagihan = {{ $visit->total_tagihan + $visit->total_diskon }};
+        let baseTotalDiskon = {{ $visit->total_diskon }};
+        let baseTotalBayar = {{ $visit->total_tagihan }};
+        let additionalTotal = 0;
 
         $('.select2').select2({
             width: '100%',
             theme: 'bootstrap-5'
         });
 
-        // Set paket dropdown jika ada paket
+        // Initialize paket selection if exists
         @if($visit->paket_id)
-        $('#paket_id_select').val({{ $visit->paket_id }}).trigger('change');
+            const paketOption = $('#paket_id_select option:selected');
+            selectedPaket = {
+                id: '{{ $visit->paket_id }}',
+                nama: paketOption.text(),
+                harga_umum: parseFloat(paketOption.data('harga-umum')) || 0,
+                harga_bpjs: parseFloat(paketOption.data('harga-bpjs')) || 0
+            };
         @endif
 
         $('#pasien_id').change(function() {
@@ -505,13 +447,8 @@
             const tglLahir = selectedOption.data('tgl_lahir');
             const jk = selectedOption.data('jk');
 
-            $('#jenis_pasien').val(jenisPasien === 'BPJS' ? 'BPJS' : 'Umum').trigger('change');
-
             $('#tgl_lahir').val(tglLahir ? formatDate(tglLahir) : '-');
             $('#jenis_kelamin').val(jk || '-');
-
-            updateAllTestPrices();
-            updateTotal();
         });
 
         $('#ruangan_id').change(function() {
@@ -538,6 +475,10 @@
 
             const hargaUmum = parseFloat(testOption.data('harga-umum')) || 0;
             const hargaBpjs = parseFloat(testOption.data('harga-bpjs')) || 0;
+            const jenisPasien = $('#jenis_pasien').val();
+            const harga = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
+            const jumlah = $('#jumlah').val() || 1;
+            const subtotal = harga * jumlah;
 
             addIndividualTestItem(
                 testId,
@@ -546,107 +487,16 @@
                 hargaBpjs,
                 testOption.data('grup'),
                 testOption.data('subgrup'),
-                $('#jumlah').val() || 1
+                jumlah
             );
+
+            // Tambahkan ke additional total
+            additionalTotal += subtotal;
+            updateTotal();
 
             testSelect.val('').trigger('change');
             $('#jumlah').val(1);
-            updateTotal();
         });
-
-        $('#paket_id_select').change(function() {
-            const paketId = $(this).val();
-            const paketOption = $(this).find('option:selected');
-
-            if (paketId) {
-                selectedPaket = {
-                    id: paketId,
-                    nama: paketOption.text(),
-                    harga_umum: parseFloat(paketOption.data('harga-umum')) || 0,
-                    harga_bpjs: parseFloat(paketOption.data('harga-bpjs')) || 0
-                };
-
-                $('#hidden_paket_id').val(paketId);
-                showPaketInfo();
-
-                // Hapus tes paket lama jika ada
-                $('#testItems tr.paket-item').remove();
-
-                $.ajax({
-                    url: `/api/pakets/${paketId}/tests`,
-                    method: 'GET',
-                    success: function(response) {
-                        if (response.length > 0) {
-                            response.forEach(function(test) {
-                                addPaketTestItem(
-                                    test.id,
-                                    `${test.kode} - ${test.nama}`,
-                                    parseFloat(test.harga_umum) || 0,
-                                    parseFloat(test.harga_bpjs) || 0,
-                                    test.grup_test,
-                                    test.sub_grup,
-                                    test.jumlah_paket
-                                );
-                            });
-                        }
-                        updateAllTestPrices();
-                        updateTotal();
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Gagal mengambil data paket:', error);
-                        removePaket();
-                    }
-                });
-            } else {
-                removePaket();
-            }
-        });
-
-        $('#removePaket').click(function() {
-            removePaket();
-        });
-
-        function showPaketInfo() {
-            const jenisPasien = $('#jenis_pasien').val();
-            const harga = jenisPasien === 'BPJS' ? selectedPaket.harga_bpjs : selectedPaket.harga_umum;
-
-            $('#paketNama').text(selectedPaket.nama);
-            $('#paketHarga').text(formatRupiah(harga));
-            $('#paketInfo').show();
-        }
-
-        function removePaket() {
-            selectedPaket = null;
-            $('#hidden_paket_id').val('');
-            $('#paket_id_select').val('').trigger('change');
-            $('#paketInfo').hide();
-            $('#testItems tr.paket-item').remove();
-            updateAllTestPrices();
-            updateTotal();
-        }
-
-        function addPaketTestItem(testId, testFullName, hargaUmum, hargaBpjs, grup, subgrup, jumlah) {
-            const nextIndex = $('#testItems tr').length;
-            const $newRow = $($('#paketTestTemplate').html());
-
-            $newRow.addClass('paket-item');
-            $newRow.attr('data-test-id', testId);
-            $newRow.find('input.test-id-input').attr('name', `tests[${nextIndex}][test_id]`).val(testId);
-            $newRow.find('input.test-from-paket').attr('name', `tests[${nextIndex}][from_paket]`).val('1');
-            $newRow.find('input.test-jumlah').attr('name', `tests[${nextIndex}][jumlah]`).val(jumlah);
-
-            $newRow.find('.test-name').text(testFullName.split(' - ')[1].trim());
-            $newRow.find('.test-grup').text(`${grup} - ${subgrup}`);
-
-            $newRow.data('harga-umum', hargaUmum);
-            $newRow.data('harga-bpjs', hargaBpjs);
-
-            if ($('#testItems tr:not(.paket-item)').length > 0) {
-                $('#testItems tr:not(.paket-item)').first().before($newRow);
-            } else {
-                $('#testItems').append($newRow);
-            }
-        }
 
         function addIndividualTestItem(testId, testFullName, hargaUmum, hargaBpjs, grup, subgrup, jumlah) {
             const jenisPasien = $('#jenis_pasien').val();
@@ -669,11 +519,16 @@
             $jumlahInput.change(function() {
                 const newJumlah = $(this).val() || 1;
                 const newSubtotal = harga * newJumlah;
+
+                // Update additional total
+                additionalTotal = additionalTotal - subtotal + newSubtotal;
                 $(this).closest('tr').find('.test-subtotal').text(formatRupiah(newSubtotal));
                 updateTotal();
             });
 
             $newRow.find('.remove-test').click(function() {
+                const rowSubtotal = harga * ($(this).closest('tr').find('input.test-jumlah').val() || 1);
+                additionalTotal -= rowSubtotal;
                 $(this).closest('tr').remove();
                 reindexTestItems();
                 updateTotal();
@@ -685,13 +540,10 @@
             $newRow.find('.test-subtotal').text(formatRupiah(subtotal));
 
             $('#testItems').append($newRow);
-
-            // Tambahkan ke existing tests
-            existingTests.push(parseInt(testId));
         }
 
         function isTestAlreadyAdded(testId) {
-            return existingTests.includes(parseInt(testId));
+            return $(`#testItems input.test-id-input[value="${testId}"]`).length > 0;
         }
 
         function reindexTestItems() {
@@ -703,75 +555,6 @@
                 index++;
             });
         }
-
-        function updateAllTestPrices() {
-            const jenisPasien = $('#jenis_pasien').val();
-
-            // Update harga untuk tes paket
-            $('#testItems tr.paket-item').each(function() {
-                const hargaUmum = $(this).data('harga-umum');
-                const hargaBpjs = $(this).data('harga-bpjs');
-                const hargaTampilan = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
-
-                const jumlah = $(this).find('input.test-jumlah').val() || 1;
-                const subtotal = 0; // Subtotal paket tidak dihitung per item
-
-                $(this).find('.test-harga').text(formatRupiah(hargaTampilan));
-                $(this).find('.test-subtotal').text(formatRupiah(subtotal));
-            });
-
-            // Update harga untuk tes individual
-            $('#testItems tr:not(.paket-item)').each(function() {
-                const hargaUmum = $(this).data('harga-umum');
-                const hargaBpjs = $(this).data('harga-bpjs');
-                const harga = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
-
-                const jumlah = $(this).find('input.test-jumlah').val() || 1;
-                const subtotal = harga * jumlah;
-
-                $(this).find('.test-harga').text(formatRupiah(harga));
-                $(this).find('.test-subtotal').text(formatRupiah(subtotal));
-            });
-
-            updateTotal();
-        }
-
-        $('#jenis_pasien').change(function() {
-            updateAllTestPrices();
-        });
-
-        $('#voucher_id').change(function() {
-            updateTotal();
-        });
-
-        // Event untuk remove test yang sudah ada
-        $(document).on('click', '.remove-test', function() {
-            const testId = $(this).closest('tr').data('test-id');
-            $(this).closest('tr').remove();
-
-            // Hapus dari existing tests
-            const index = existingTests.indexOf(testId);
-            if (index > -1) {
-                existingTests.splice(index, 1);
-            }
-
-            reindexTestItems();
-            updateTotal();
-        });
-
-        // Event untuk perubahan jumlah pada tes yang sudah ada
-        $(document).on('change', '.test-jumlah', function() {
-            const $row = $(this).closest('tr');
-            const hargaUmum = $row.data('harga-umum');
-            const hargaBpjs = $row.data('harga-bpjs');
-            const jenisPasien = $('#jenis_pasien').val();
-            const harga = jenisPasien === 'BPJS' ? hargaBpjs : hargaUmum;
-            const jumlah = $(this).val() || 1;
-            const subtotal = harga * jumlah;
-
-            $row.find('.test-subtotal').text(formatRupiah(subtotal));
-            updateTotal();
-        });
 
         function formatDate(dateString) {
             if (!dateString) return '-';
@@ -787,54 +570,17 @@
         }
 
         function updateTotal() {
-            let subtotalPaket = 0;
-            let subtotalIndividual = 0;
-            const jenisPasien = $('#jenis_pasien').val();
-            const voucherOption = $('#voucher_id option:selected');
-            const voucherValue = parseFloat(voucherOption.data('value')) || 0;
-            const voucherTipe = voucherOption.data('tipe');
+            const totalTagihan = baseTotalTagihan + additionalTotal;
+            const totalDiskon = baseTotalDiskon;
+            const totalBayar = totalTagihan - totalDiskon;
 
-            // Hitung subtotal paket
-            if (selectedPaket) {
-                const hargaPaket = jenisPasien === 'BPJS' ? selectedPaket.harga_bpjs : selectedPaket.harga_umum;
-                subtotalPaket = hargaPaket;
-            }
-
-            // Hitung subtotal individual (termasuk yang sudah ada dan baru)
-            $('#testItems tr:not(.paket-item)').each(function() {
-                const subtotalText = $(this).find('.test-subtotal').text();
-                const subtotal = parseInt(subtotalText.replace(/\D/g, '')) || 0;
-                subtotalIndividual += subtotal;
-            });
-
-            const tambahanItem = subtotalIndividual;
-            const totalTagihan = totalTagihanAwal + tambahanItem;
-
-            let diskonNominal = 0;
-            if (voucherTipe === 'persen') {
-                diskonNominal = totalTagihan * (voucherValue / 100);
-                diskonNominal = Math.min(diskonNominal, totalTagihan);
-            } else {
-                diskonNominal = voucherValue;
-                diskonNominal = Math.min(diskonNominal, totalTagihan);
-            }
-            diskonNominal = Math.round(diskonNominal);
-
-            let totalSetelahDiskon = totalTagihan;
-
-            $('#tambahanItem').text(formatRupiah(tambahanItem));
             $('#totalTagihan').text(formatRupiah(totalTagihan));
-            $('#totalDiskon').text(formatRupiah(diskonNominal));
-            $('#totalBayar').text(formatRupiah(totalSetelahDiskon));
+            $('#totalDiskon').text(formatRupiah(totalDiskon));
+            $('#totalBayar').text(formatRupiah(totalBayar));
         }
 
-        // Inisialisasi
+        // Initialize
         updateTotal();
-        if ($('#pasien_id').val()) {
-            $('#pasien_id').trigger('change');
-        }
-
-        updateAllTestPrices();
     });
 </script>
 @endpush

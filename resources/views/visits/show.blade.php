@@ -227,7 +227,7 @@
 <!-- Modal Pembayaran -->
 <div class="modal fade" id="modalPembayaran" tabindex="-1" aria-labelledby="modalPembayaranLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <form action="{{ route('visits.pembayaran', $visit->id) }}" method="POST">
+        <form action="{{ route('visits.pembayaran', $visit->id) }}" method="POST" id="formPembayaran">
             @csrf
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
@@ -243,14 +243,19 @@
                     </div>
                     <div class="mb-3">
                         <label>Dibayar</label>
-                        <input type="number" name="dibayar" class="form-control" min="0" required>
+                        <input type="number" name="dibayar" id="dibayar" class="form-control" min="0" value="0" required>
+                        <small class="text-muted" id="infoBPJS" style="display: none;">
+                            Untuk BPJS, pembayaran otomatis dianggap lunas
+                        </small>
                     </div>
                     <div class="mb-3">
                         <label>Metode Pembayaran</label>
-                        <select name="metodebyr_id" class="form-control" required>
+                        <select name="metodebyr_id" id="metodePembayaran" class="form-control" required>
                             <option value="">-- Pilih Metode --</option>
                             @foreach($metodePembayarans as $metode)
-                            <option value="{{ $metode->id }}">{{ $metode->nama }}</option>
+                            <option value="{{ $metode->id }}" data-nama="{{ $metode->nama }}">
+                                {{ $metode->nama }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
@@ -263,5 +268,37 @@
         </form>
     </div>
 </div>
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const metodeSelect = document.getElementById('metodePembayaran');
+        const dibayarInput = document.getElementById('dibayar');
+        const infoBPJS = document.getElementById('infoBPJS');
+
+        metodeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const metodeNama = selectedOption.getAttribute('data-nama');
+
+            if (metodeNama === 'BPJS') {
+                dibayarInput.value = 0;
+                dibayarInput.disabled = true;
+                dibayarInput.placeholder = 'Otomatis 0 untuk BPJS';
+                infoBPJS.style.display = 'block';
+            } else {
+                dibayarInput.disabled = false;
+                dibayarInput.placeholder = '';
+                infoBPJS.style.display = 'none';
+
+                if (dibayarInput.value == 0) {
+                    dibayarInput.value = '';
+                }
+            }
+        });
+
+        metodeSelect.dispatchEvent(new Event('change'));
+    });
+</script>
+@endsection
 
 @endsection

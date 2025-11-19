@@ -260,7 +260,6 @@ class VisitController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Validasi data dari form
         $request->validate([
             'pasien_id' => 'required|exists:pasiens,id',
             'jenis_pasien' => 'required|in:Umum,BPJS',
@@ -274,110 +273,196 @@ class VisitController extends Controller
             'tests' => 'nullable|array',
             'tests.*.test_id' => 'required_with:tests|exists:tests,id',
             'tests.*.jumlah' => 'required_with:tests|integer|min:1',
-            'tests.*.id' => 'nullable|exists:visit_tests,id', // Validasi untuk id VisitTest yang sudah ada
+            'tests.*.from_paket' => 'sometimes|in:0,1',
             'tgl_order' => 'nullable|date_format:d/m/Y H:i',
         ]);
 
-        if (!$request->filled('paket_id') && (!isset($request->tests) || empty($request->tests))) {
-            return back()->withErrors(['general' => 'Pilih setidaknya satu paket atau satu tes.'])->withInput();
-        }
-
         DB::beginTransaction();
+
         try {
-            // Temukan visit yang akan diupdate
-            $visit = Visit::with(['visitTests'])->findOrFail($id);
-            $tglOrder = $request->tgl_order;
-            if ($request->tgl_order && Carbon::createFromFormat('d/m/Y H:i', $request->tgl_order)->toDateString() !== $visit->tgl_order->toDateString()) {
-                $tglOrderBaru = Carbon::createFromFormat('d/m/Y H:i', $request->tgl_order);
-                $prefixBaru = 'PK' . $tglOrderBaru->format('Ymd');
+            $visit = Visit::findOrFail($id);
 
-                $lastOrderBaru = Visit::where('no_order', 'like', $prefixBaru . '%')
-                    ->orderBy('no_order', 'desc')
-                    ->first();
-
-                $lastNumberBaru = $lastOrderBaru ? (int) substr($lastOrderBaru->no_order, -3) : 0;
-                $newNumberBaru = str_pad($lastNumberBaru + 1, 3, '0', STR_PAD_LEFT);
-                $no_orderBaru = $prefixBaru . $newNumberBaru;
-
-                $visit->no_order = $no_orderBaru;
-                $visit->tgl_order = $tglOrderBaru;
-            }
-            // Update data utama visit
-            $visit->fill($request->only([
-                'pasien_id',
-                'jenis_pasien',
-                'dokter_id',
-                'ruangan_id',
-                'diagnosa',
-                'jenis_order',
-                'voucher_id',
-                'metodebyr_id',
-                'paket_id',
-                'tgl_order'
-            ]));
-            $visit->tgl_order = $tglOrder;
-            $visit->save();
-
-            if ($request->filled('paket_id')) {
-                // Jika ada paket, hapus semua test yang lama dan buat yang baru
-                $visit->visitTests()->delete();
-                $paket = Paket::with('paketItems.test')->findOrFail($request->paket_id);
-                foreach ($paket->paketItems as $paketItem) {
-                    $testModel = $paketItem->test;
-                    if ($testModel) {
-                        $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
-                        $subtotal = $harga * $paketItem->jumlah;
-
-                        $visit->visitTests()->create([
-                            'test_id' => $testModel->id,
-                            'harga' => $harga,
-                            'jumlah' => $paketItem->jumlah,
-                            'subtotal' => $subtotal,
-                        ]);
-                    }
-                }
+            if ($request->filled('tgl_order')) {
+                $tglOrder = Carbon::createFromFormat('d/m/Y H:i', $request->tgl_order);
             } else {
-                // Jika tidak ada paket, tangani test satu per satu
-                $existingIds = collect($request->tests)->pluck('id')->filter()->toArray();
+                $tglOrder = $visit->tgl_order;
+            }
 
-                // Hapus test yang tidak ada di request
-                $visit->visitTests()->whereNotIn('id', $existingIds)->delete();
+            // Simpan total tagihan awal SEBELUM diupdate (untuk referensi)
+            $totalTagihanAwal = $visit->total_tagihan;
 
-                foreach ($request->tests as $test) {
-                    $testModel = Test::find($test['test_id']);
-                    $harga = $request->jenis_pasien == 'BPJS' ? $testModel->harga_bpjs : $testModel->harga_umum;
-                    $subtotal = $harga * $test['jumlah'];
+            // Update data dasar
+            $visit->update([
+                'tgl_order' => $tglOrder,
+                'pasien_id' => $request->pasien_id,
+                'jenis_pasien' => $request->jenis_pasien,
+                'dokter_id' => $request->dokter_id,
+                'ruangan_id' => $request->ruangan_id,
+                'diagnosa' => $request->diagnosa,
+                'jenis_order' => $request->jenis_order,
+                'voucher_id' => $request->voucher_id,
+                'metodebyr_id' => $request->metodebyr_id,
+                'paket_id' => $request->paket_id,
+            ]);
 
-                    if (isset($test['id'])) {
+            // LOGIKA BARU: Tidak menghapus semua, hanya update yang berubah
+            $existingTests = $visit->visitTests->keyBy('test_id');
+            $newTestIds = collect($request->tests ?? [])->pluck('test_id')->toArray();
+
+            // Hapus hanya test yang tidak ada lagi di request
+            $testsToDelete = $existingTests->keys()->diff($newTestIds);
+            if ($testsToDelete->count() > 0) {
+                $visit->visitTests()->whereIn('test_id', $testsToDelete)->delete();
+            }
+
+            $total_tagihan_baru = 0;
+            $total_diskon = 0;
+
+            // LOGIKA BARU: Hitung ULANG semua dari awal (paket + semua tes)
+
+            // 1. Hitung dari paket jika ada
+            if ($request->filled('paket_id')) {
+                $paket = Paket::findOrFail($request->paket_id);
+                $harga_paket = ($request->jenis_pasien === 'BPJS')
+                    ? $paket->harga_bpjs
+                    : $paket->harga_umum;
+                $harga_paket;
+            }
+
+            // 2. Hitung hanya tes individual (BUKAN dari paket)
+            if (isset($request->tests) && !empty($request->tests)) {
+                foreach ($request->tests as $testData) {
+                    $testModel = Test::findOrFail($testData['test_id']);
+
+                    $harga = ($request->jenis_pasien === 'BPJS')
+                        ? $testModel->harga_bpjs
+                        : $testModel->harga_umum;
+
+                    $jumlah = $testData['jumlah'];
+                    $subtotal = $harga * $jumlah;
+
+                    $fromPaket = $testData['from_paket'] ?? '0';
+
+                    if ($fromPaket == '0') {
+                        $total_tagihan_baru += $subtotal;
+                    }
+
+                    // Cek apakah test sudah ada
+                    if ($existingTests->has($testData['test_id'])) {
                         // Update test yang sudah ada
-                        $visit->visitTests()->find($test['id'])->update([
-                            'test_id' => $test['test_id'],
+                        $existingTest = $existingTests->get($testData['test_id']);
+                        $existingTest->update([
                             'harga' => $harga,
-                            'jumlah' => $test['jumlah'],
-                            'subtotal' => $subtotal
+                            'jumlah' => $jumlah,
+                            'subtotal' => $subtotal,
+                            'from_paket' => $fromPaket,
                         ]);
                     } else {
                         // Buat test baru
-                        $visit->visitTests()->create([
-                            'test_id' => $test['test_id'],
+                        VisitTest::create([
+                            'visit_id' => $visit->id,
+                            'test_id' => $testData['test_id'],
                             'harga' => $harga,
-                            'jumlah' => $test['jumlah'],
-                            'subtotal' => $subtotal
+                            'jumlah' => $jumlah,
+                            'subtotal' => $subtotal,
+                            'from_paket' => $fromPaket,
                         ]);
                     }
                 }
             }
 
-            // Hitung ulang total tagihan setelah perubahan
-            $visit->calculateTotal();
+            if ($request->filled('paket_id') && $request->jenis_pasien !== 'BPJS') {
+                $total_tagihan_baru = max(0, $total_tagihan_baru - 50000); // Kurangi 50.000, minimal 0
+            }
+
+            // 3. Hitung diskon berdasarkan total tagihan BARU
+            if ($request->filled('voucher_id') && $total_tagihan_baru > 0) {
+                $voucher = Voucher::findOrFail($request->voucher_id);
+                $voucherValue = $voucher->value;
+                $voucherTipe = $voucher->tipe;
+
+                if ($voucherTipe === 'persen') {
+                    $total_diskon = $total_tagihan_baru * ($voucherValue / 100);
+                } else {
+                    $total_diskon = $voucherValue;
+                }
+
+                $total_diskon = min($total_diskon, $total_tagihan_baru);
+            }
+
+            // 4. Update total di database
+            $visit->total_tagihan = $total_tagihan_baru - $total_diskon;
+            $visit->total_diskon = $total_diskon;
+
+            // 5. Handle status pembayaran
+            if ($request->jenis_pasien === 'BPJS') {
+                $visit->dibayar = 0;
+                $visit->status_pembayaran = 'Lunas';
+            } else {
+                if ($visit->dibayar >= $visit->total_tagihan) {
+                    $visit->status_pembayaran = 'Lunas';
+                    if ($visit->dibayar > $visit->total_tagihan) {
+                        $visit->dibayar = $visit->total_tagihan;
+                    }
+                } else {
+                    $visit->status_pembayaran = 'Belum Lunas';
+                }
+            }
+            if (in_array($visit->status_order, ['Proses', 'Selesai'])) {
+                $this->syncHasilLabForNewTests($visit);
+            }
+            $visit->save();
 
             DB::commit();
-
             return redirect()->route('visits.show', $visit->id)
-                ->with('success', 'Order berhasil diperbarui');
+                ->with('success', 'Order berhasil diupdate dengan nomor: ' . $visit->no_order)
+                ->with('info', 'Total tagihan awal: Rp ' . number_format($totalTagihanAwal, 0, ',', '.') .
+                    ' | Total tagihan baru: Rp ' . number_format($total_tagihan_baru, 0, ',', '.'));
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memperbarui order: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Gagal mengupdate order: ' . $e->getMessage())->withInput();
+        }
+    }
+    private function syncHasilLabForNewTests(Visit $visit)
+    {
+        $visit->load(['visitTests.test.detailTests' => function ($query) {
+            $query->where('status', 'Aktif')->orderBy('urutan');
+        }]);
+
+        $visitDate = Carbon::parse($visit->tgl_order)->toDateString();
+        $currentTime = Carbon::now()->toTimeString();
+        $timestampToUse = $visitDate . ' ' . $currentTime;
+
+        foreach ($visit->visitTests as $visitTest) {
+            // Cek apakah sudah ada di HasilLab
+            $existingHasilLab = HasilLab::where('visit_test_id', $visitTest->id)->exists();
+
+            if (!$existingHasilLab) {
+                $test = $visitTest->test;
+
+                if ($test->detailTests->isNotEmpty()) {
+                    foreach ($test->detailTests as $detailTest) {
+                        HasilLab::create([
+                            'visit_test_id' => $visitTest->id,
+                            'test_id' => $test->id,
+                            'detail_test_id' => $detailTest->id,
+                            'status' => 'Belum Valid',
+                            'created_at' => $timestampToUse,
+                            'updated_at' => $timestampToUse,
+                        ]);
+                    }
+                } else {
+                    HasilLab::create([
+                        'visit_test_id' => $visitTest->id,
+                        'test_id' => $test->id,
+                        'detail_test_id' => null,
+                        'status' => 'Belum Valid',
+                        'created_at' => $timestampToUse,
+                        'updated_at' => $timestampToUse,
+                    ]);
+                }
+            }
         }
     }
     public function pembayaran(Request $request, $id)
@@ -390,12 +475,23 @@ class VisitController extends Controller
         DB::beginTransaction();
         try {
             $visit = Visit::findOrFail($id);
-            $totalDibayar = $visit->dibayar + $request->dibayar;
+            $metodePembayaran = \App\Models\Metodebyr::findOrFail($request->metodebyr_id);
+
+            // Jika metode pembayaran adalah BPJS, otomatis lunas dengan dibayar = 0
+            if ($metodePembayaran->nama == 'BPJS') {
+                $totalDibayar = 0;
+                $statusPembayaran = 'Lunas';
+            } else {
+                $totalDibayar = $visit->dibayar + $request->dibayar;
+                $statusPembayaran = ($totalDibayar >= $visit->total_tagihan) ? 'Lunas' : 'Belum Lunas';
+            }
+
             $visit->update([
                 'dibayar' => $totalDibayar,
                 'metodebyr_id' => $request->metodebyr_id,
-                'status_pembayaran' => ($totalDibayar >= $visit->total_tagihan) ? 'Lunas' : 'Belum Lunas',
+                'status_pembayaran' => $statusPembayaran,
             ]);
+
             DB::commit();
             return back()->with('success', 'Pembayaran berhasil dicatat');
         } catch (\Exception $e) {
